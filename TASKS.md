@@ -14,7 +14,9 @@
 - [x] Start next slice: T-022, T-023, T-024, T-025.
 - [x] Start next slice: T-026, T-027, T-028, T-029.
 - [x] Start next slice: T-030, T-031, T-032.
-- [ ] Start next slice: T-033, T-034, T-035.
+- [x] Start next slice: T-033, T-034, T-035.
+- [x] Start next slice: T-036, T-037.
+- [x] Start next slice: T-038, T-039.
 
 ## Phase 0: Foundation and architecture
 
@@ -73,13 +75,13 @@
 
 ## Phase 5: Quality, performance, and launch readiness
 
-- [ ] T-033 Add unit tests for normalization, store persistence, and planner logic.
-- [ ] T-034 Add UI tests for favorites selection, ZIP defaults, and key sections.
-- [ ] T-035 Add error-path tests for API failure and empty data scenarios.
-- [ ] T-036 Run accessibility pass (keyboard, focus states, labels, contrast).
-- [ ] T-037 Run performance pass (bundle split, loading states, skeletons).
-- [ ] T-038 Finalize README with setup, env vars, scripts, and architecture notes.
-- [ ] T-039 Create MVP launch checklist and known limitations log.
+- [x] T-033 Add unit tests for normalization, store persistence, and planner logic.
+- [x] T-034 Add UI tests for favorites selection, ZIP defaults, and key sections.
+- [x] T-035 Add error-path tests for API failure and empty data scenarios.
+- [x] T-036 Run accessibility pass (keyboard, focus states, labels, contrast).
+- [x] T-037 Run performance pass (bundle split, loading states, skeletons).
+- [x] T-038 Finalize README with setup, env vars, scripts, and architecture notes.
+- [x] T-039 Create MVP launch checklist and known limitations log.
 
 ## Milestones
 
@@ -88,7 +90,7 @@
 - [x] M3 Personalization complete (T-013 to T-018).
 - [x] M4 Core dashboard complete (T-019 to T-026).
 - [x] M5 Recommendation and planner complete (T-027 to T-032).
-- [ ] M6 MVP launch-ready (T-033 to T-039).
+- [x] M6 MVP launch-ready (T-033 to T-039).
 
 ## Notes
 

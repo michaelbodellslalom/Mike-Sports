@@ -57,27 +57,28 @@ export default function Home() {
   }, [favorites]);
 
   useEffect(() => {
-    let cancelled = false;
+    const abortController = new AbortController();
 
     async function loadScores() {
       setIsLoadingGames(true);
       setGameError(null);
       try {
-        const response = await fetch(`/api/sports?league=${selectedLeague}`);
+        const response = await fetch(`/api/sports?league=${selectedLeague}`, {
+          signal: abortController.signal,
+        });
         if (!response.ok) {
           throw new Error(`Sports API returned ${response.status}`);
         }
         const payload = (await response.json()) as SportsApiResponse;
-        if (!cancelled) {
-          setGames(payload.games ?? []);
-        }
+        setGames(payload.games ?? []);
       } catch (error) {
-        if (!cancelled) {
-          setGameError(error instanceof Error ? error.message : "Unable to load scores");
-          setGames([]);
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
         }
+        setGameError(error instanceof Error ? error.message : "Unable to load scores");
+        setGames([]);
       } finally {
-        if (!cancelled) {
+        if (!abortController.signal.aborted) {
           setIsLoadingGames(false);
         }
       }
@@ -86,12 +87,12 @@ export default function Home() {
     loadScores();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
   }, [selectedLeague]);
 
   useEffect(() => {
-    let cancelled = false;
+    const abortController = new AbortController();
     const query = favorites[0] ?? "Minnesota Vikings";
 
     async function loadNews() {
@@ -99,21 +100,22 @@ export default function Home() {
       setNewsError(null);
       try {
         const encodedQuery = encodeURIComponent(query);
-        const response = await fetch(`/api/news?q=${encodedQuery}&league=${selectedLeague}`);
+        const response = await fetch(`/api/news?q=${encodedQuery}&league=${selectedLeague}`, {
+          signal: abortController.signal,
+        });
         if (!response.ok) {
           throw new Error(`News API returned ${response.status}`);
         }
         const payload = (await response.json()) as NewsApiResponse;
-        if (!cancelled) {
-          setNews(payload.items ?? []);
-        }
+        setNews(payload.items ?? []);
       } catch (error) {
-        if (!cancelled) {
-          setNewsError(error instanceof Error ? error.message : "Unable to load news");
-          setNews([]);
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
         }
+        setNewsError(error instanceof Error ? error.message : "Unable to load news");
+        setNews([]);
       } finally {
-        if (!cancelled) {
+        if (!abortController.signal.aborted) {
           setIsLoadingNews(false);
         }
       }
@@ -122,7 +124,7 @@ export default function Home() {
     loadNews();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
   }, [favorites, selectedLeague]);
 
@@ -169,7 +171,7 @@ export default function Home() {
       return;
     }
 
-    let cancelled = false;
+    const abortController = new AbortController();
 
     async function loadWatchOptions() {
       const game = watchGameCandidates.find((item) => item.id === activeWatchGameId);
@@ -182,21 +184,22 @@ export default function Home() {
 
       try {
         const title = encodeURIComponent(`${game.awayTeam} at ${game.homeTeam}`);
-        const response = await fetch(`/api/watch?gameId=${game.id}&title=${title}`);
+        const response = await fetch(`/api/watch?gameId=${game.id}&title=${title}`, {
+          signal: abortController.signal,
+        });
         if (!response.ok) {
           throw new Error(`Watch API returned ${response.status}`);
         }
         const payload = (await response.json()) as WatchApiResponse;
-        if (!cancelled) {
-          setWatchOptions(payload.options ?? []);
-        }
+        setWatchOptions(payload.options ?? []);
       } catch (error) {
-        if (!cancelled) {
-          setWatchError(error instanceof Error ? error.message : "Unable to load watch options");
-          setWatchOptions([]);
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
         }
+        setWatchError(error instanceof Error ? error.message : "Unable to load watch options");
+        setWatchOptions([]);
       } finally {
-        if (!cancelled) {
+        if (!abortController.signal.aborted) {
           setIsLoadingWatch(false);
         }
       }
@@ -205,7 +208,7 @@ export default function Home() {
     loadWatchOptions();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
   }, [activeWatchGameId, watchGameCandidates]);
 
@@ -253,7 +256,11 @@ export default function Home() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-8">
+    <>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      <main id="main-content" className="mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-8">
       <header className="rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-6">
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--brand)]">Mike Sports</p>
         <h1 className="mt-2 text-3xl font-bold">Implementation Kickoff</h1>
@@ -262,8 +269,8 @@ export default function Home() {
         </p>
       </header>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
-        <h2 className="text-lg font-semibold">Today snapshot</h2>
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="snapshot-title">
+        <h2 id="snapshot-title" className="text-lg font-semibold">Today snapshot</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="rounded-lg border border-[var(--border)] bg-white p-3">
             <p className="text-xs uppercase tracking-wide text-[var(--muted)]">League view</p>
@@ -280,9 +287,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="scores-title" aria-busy={isLoadingGames}>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">Scores</h2>
+          <h2 id="scores-title" className="text-lg font-semibold">Scores</h2>
           <span className="text-xs text-[var(--muted)]">Source: {providerConfig.sports.provider}</span>
         </div>
         <div className="mt-3 space-y-2">
@@ -307,9 +314,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="news-title" aria-busy={isLoadingNews}>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">News</h2>
+          <h2 id="news-title" className="text-lg font-semibold">News</h2>
           <span className="text-xs text-[var(--muted)]">Source: {providerConfig.news.provider}</span>
         </div>
         <div className="mt-3 space-y-2">
@@ -337,15 +344,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="schedule-title">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">Schedule</h2>
+          <h2 id="schedule-title" className="text-lg font-semibold">Schedule</h2>
           <div className="flex gap-2">
             {(["day", "week", "month"] as const).map((window) => (
               <button
                 key={window}
                 type="button"
                 onClick={() => setScheduleWindow(window)}
+                aria-pressed={scheduleWindow === window}
                 className={`rounded-md border px-3 py-1 text-xs font-semibold uppercase ${
                   scheduleWindow === window
                     ? "border-[var(--brand)] bg-emerald-50 text-emerald-900"
@@ -372,9 +380,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="watch-title" aria-busy={isLoadingWatch}>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">Where to watch</h2>
+          <h2 id="watch-title" className="text-lg font-semibold">Where to watch</h2>
           <span className="text-xs text-[var(--muted)]">Source: {providerConfig.watch.provider}</span>
         </div>
 
@@ -418,8 +426,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
-        <h2 className="text-lg font-semibold">Tickets near {zipCode}</h2>
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="tickets-title">
+        <h2 id="tickets-title" className="text-lg font-semibold">Tickets near {zipCode}</h2>
         <div className="mt-3 space-y-2">
           {ticketOptions.length === 0 ? (
             <EmptyState message="No ticket links available for the current schedule window." />
@@ -447,8 +455,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
-        <h2 className="text-lg font-semibold">Recommended games beyond favorites</h2>
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="recommendations-title">
+        <h2 id="recommendations-title" className="text-lg font-semibold">Recommended games beyond favorites</h2>
         <p className="mt-1 text-xs text-[var(--muted)]">
           Reason labels explain why each game is suggested.
         </p>
@@ -473,8 +481,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
-        <h2 className="text-lg font-semibold">Daily watch plan</h2>
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="watch-plan-title">
+        <h2 id="watch-plan-title" className="text-lg font-semibold">Daily watch plan</h2>
         <p className="mt-1 text-xs text-[var(--muted)]">
           Ordered by favorites first, then high-interest options, then overlap reduction.
         </p>
@@ -502,8 +510,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
-        <h2 className="text-lg font-semibold">Provider choices</h2>
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="providers-title">
+        <h2 id="providers-title" className="text-lg font-semibold">Provider choices</h2>
         <ul className="mt-3 space-y-2 text-sm text-[var(--muted)]">
           <li>Sports: {providerConfig.sports.provider}</li>
           <li>News: {providerConfig.news.provider}</li>
@@ -511,8 +519,8 @@ export default function Home() {
         </ul>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6">
-        <h2 className="text-lg font-semibold">Preferences bootstrap</h2>
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="preferences-title">
+        <h2 id="preferences-title" className="text-lg font-semibold">Preferences bootstrap</h2>
         <p className="mt-2 text-sm text-[var(--muted)]">Selected favorites: {selectedCount}</p>
         <label className="mt-4 block text-sm font-medium" htmlFor="zipcode">
           ZIP code
@@ -535,7 +543,7 @@ export default function Home() {
           >
             Use my location
           </button>
-          <span className="text-xs text-[var(--muted)]">{geoMessage}</span>
+          <span role="status" aria-live="polite" className="text-xs text-[var(--muted)]">{geoMessage}</span>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -546,6 +554,7 @@ export default function Home() {
                 key={option}
                 type="button"
                 onClick={() => toggleFavorite(option)}
+                aria-pressed={selected}
                 className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
                   selected
                     ? "border-[var(--brand)] bg-emerald-50 text-emerald-900"
@@ -558,6 +567,7 @@ export default function Home() {
           })}
         </div>
       </section>
-    </main>
+      </main>
+    </>
   );
 }
