@@ -346,21 +346,23 @@ export default function Home() {
 
   const liveGames = useMemo(() => games.filter((game) => game.status === "live"), [games]);
   const upcomingGames = useMemo(() => games.filter((game) => game.status === "scheduled"), [games]);
-  const displayedGames = useMemo(() => (games.length > 0 ? games : fallbackGames), [fallbackGames, games]);
-  const displayedLiveGames = useMemo(
-    () => (liveGames.length > 0 ? liveGames : displayedGames.filter((game) => game.status === "live")),
-    [displayedGames, liveGames],
-  );
-  const displayedUpcomingGames = useMemo(
-    () => (upcomingGames.length > 0 ? upcomingGames : displayedGames.filter((game) => game.status === "scheduled")),
-    [displayedGames, upcomingGames],
-  );
+  // Blend real games with fallback games for variety, prioritizing real games
+  const displayedGames = useMemo(() => {
+    if (games.length > 0) {
+      // Mix real games with fallback games for better variety
+      return [...games, ...fallbackGames.filter((fg) => !games.some((g) => g.id === fg.id))];
+    }
+    return fallbackGames;
+  }, [fallbackGames, games]);
+  const displayedLiveGames = useMemo(() => displayedGames.filter((game) => game.status === "live"), [displayedGames]);
+  const displayedUpcomingGames = useMemo(() => displayedGames.filter((game) => game.status === "scheduled"), [displayedGames]);
+  const displayedCompletedGames = useMemo(() => displayedGames.filter((game) => game.status === "final"), [displayedGames]);
 
   // Today's games only
   const todayGames = useMemo(() => displayedGames.filter((game) => isGameToday(game.startTimeIso)), [displayedGames]);
   const todayLiveGames = useMemo(() => todayGames.filter((game) => game.status === "live"), [todayGames]);
   const todayUpcomingGames = useMemo(() => todayGames.filter((game) => game.status === "scheduled"), [todayGames]);
-  const todayCompletedGames = useMemo(() => todayGames.filter((game) => game.status === "final" || game.status === "completed"), [todayGames]);
+  const todayCompletedGames = useMemo(() => todayGames.filter((game) => game.status === "final"), [todayGames]);
 
   // Schedule section: 3-5 games spread throughout the day (prioritize live, then upcoming)
   const scheduledTodayGames = useMemo(() => spreadGamesInTimeSlots([...todayLiveGames, ...todayUpcomingGames, ...todayCompletedGames]), [todayLiveGames, todayUpcomingGames, todayCompletedGames]);
@@ -701,7 +703,7 @@ export default function Home() {
                   <div className="flex w-12 shrink-0 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-emerald-100 font-bold text-emerald-700">
                     <span className="text-lg">#{idx + 1}</span>
                   </div>
-                  <div className="flex flex-1 items-center gap-2 px-3 py-2">
+                  <div className="flex flex-1 items-center gap-1 px-3 py-2">
                     <TeamLogo teamName={game.awayTeam} size={28} />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{game.awayTeam} @ {game.homeTeam}</p>
@@ -736,38 +738,50 @@ export default function Home() {
           {isLoadingGames ? <LoadingState label="Loading latest games..." /> : null}
           {gameError ? <ErrorState message={gameError} /> : null}
           {!isLoadingGames && !gameError
-            ? displayedGames.filter((game) => game.awayTeam && game.homeTeam).slice(0, 8).map((game) => {
-                const getStatusColor = (status: string): string => {
-                  const statusLower = status.toLowerCase();
-                  if (statusLower === 'live' || statusLower === 'in_play') {
-                    return 'bg-orange-100 text-orange-900';
-                  } else if (statusLower === 'scheduled' || statusLower === 'upcoming') {
-                    return 'bg-blue-100 text-blue-900';
-                  } else if (statusLower === 'final' || statusLower === 'finished' || statusLower === 'completed') {
-                    return 'bg-green-100 text-green-900';
-                  }
-                  return 'bg-slate-100 text-slate-900';
-                };
+            ? displayedGames
+                .filter((game) => game.awayTeam && game.homeTeam)
+                .sort((a, b) => {
+                  // Priority: Live > Final > Scheduled
+                  const statusOrder = { live: 0, final: 1, scheduled: 2 };
+                  const aOrder = statusOrder[a.status] ?? 3;
+                  const bOrder = statusOrder[b.status] ?? 3;
+                  if (aOrder !== bOrder) return aOrder - bOrder;
+                  // Then sort by date/time (earliest first)
+                  return new Date(a.startTimeIso).getTime() - new Date(b.startTimeIso).getTime();
+                })
+                .slice(0, 8)
+                .map((game) => {
+                  const getStatusColor = (status: string): string => {
+                    const statusLower = status.toLowerCase();
+                    if (statusLower === 'live' || statusLower === 'in_play') {
+                      return 'bg-orange-100 text-orange-900';
+                    } else if (statusLower === 'scheduled' || statusLower === 'upcoming') {
+                      return 'bg-blue-100 text-blue-900';
+                    } else if (statusLower === 'final' || statusLower === 'finished' || statusLower === 'completed') {
+                      return 'bg-green-100 text-green-900';
+                    }
+                    return 'bg-slate-100 text-slate-900';
+                  };
 
-                return (
-                  <article
-                    key={game.id}
-                    className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-white px-3 py-3 text-sm shadow-sm"
-                  >
-                    <TeamLogo teamName={game.awayTeam} size={28} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{formatGameLine(game)}</p>
-                      <p className="mt-0.5 text-xs uppercase tracking-wide text-[var(--muted)]" suppressHydrationWarning>
-                        {formatLocalDateTime(game.startTimeIso)}{game.venue ? ` • ${game.venue}` : ""}
-                      </p>
-                    </div>
-                    <TeamLogo teamName={game.homeTeam} size={28} />
-                    <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${getStatusColor(game.status)}`}>
-                      {game.status}
-                    </span>
-                  </article>
-                );
-              })
+                  return (
+                    <article
+                      key={game.id}
+                      className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-white px-3 py-3 text-sm shadow-sm"
+                    >
+                      <TeamLogo teamName={game.awayTeam} size={28} />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{formatGameLine(game)}</p>
+                        <p className="mt-0.5 text-xs uppercase tracking-wide text-[var(--muted)]" suppressHydrationWarning>
+                          {formatLocalDateTime(game.startTimeIso)}{game.venue ? ` • ${game.venue}` : ""}
+                        </p>
+                      </div>
+                      <TeamLogo teamName={game.homeTeam} size={28} />
+                      <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${getStatusColor(game.status)}`}>
+                        {game.status}
+                      </span>
+                    </article>
+                  );
+                })
             : null}
         </div>
       </section>

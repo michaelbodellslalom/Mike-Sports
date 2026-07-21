@@ -20,6 +20,17 @@ export const fallbackGamesByLeague: Record<string, Game[]> = {
     {
       id: "fallback-nfl-2",
       league: "NFL",
+      startTimeIso: isoFromNow(-4),
+      status: "final",
+      homeTeam: "Buffalo Bills",
+      awayTeam: "Philadelphia Eagles",
+      homeScore: 27,
+      awayScore: 24,
+      venue: "Highmark Stadium",
+    },
+    {
+      id: "fallback-nfl-3",
+      league: "NFL",
       startTimeIso: isoFromNow(6),
       status: "scheduled",
       homeTeam: "Chicago Bears",
@@ -27,7 +38,7 @@ export const fallbackGamesByLeague: Record<string, Game[]> = {
       venue: "Soldier Field",
     },
     {
-      id: "fallback-nfl-3",
+      id: "fallback-nfl-4",
       league: "NFL",
       startTimeIso: isoFromNow(10),
       status: "scheduled",
@@ -40,6 +51,17 @@ export const fallbackGamesByLeague: Record<string, Game[]> = {
     {
       id: "fallback-mlb-1",
       league: "MLB",
+      startTimeIso: isoFromNow(-3),
+      status: "final",
+      homeTeam: "Boston Red Sox",
+      awayTeam: "New York Yankees",
+      homeScore: 5,
+      awayScore: 3,
+      venue: "Fenway Park",
+    },
+    {
+      id: "fallback-mlb-2",
+      league: "MLB",
       startTimeIso: isoFromNow(3),
       status: "scheduled",
       homeTeam: "Minnesota Twins",
@@ -47,7 +69,7 @@ export const fallbackGamesByLeague: Record<string, Game[]> = {
       venue: "Target Field",
     },
     {
-      id: "fallback-mlb-2",
+      id: "fallback-mlb-3",
       league: "MLB",
       startTimeIso: isoFromNow(4.5),
       status: "scheduled",
@@ -56,7 +78,7 @@ export const fallbackGamesByLeague: Record<string, Game[]> = {
       venue: "Dodger Stadium",
     },
     {
-      id: "fallback-mlb-3",
+      id: "fallback-mlb-4",
       league: "MLB",
       startTimeIso: isoFromNow(5),
       status: "scheduled",
@@ -68,6 +90,17 @@ export const fallbackGamesByLeague: Record<string, Game[]> = {
   NHL: [
     {
       id: "fallback-nhl-1",
+      league: "NHL",
+      startTimeIso: isoFromNow(-2),
+      status: "final",
+      homeTeam: "Colorado Avalanche",
+      awayTeam: "Minnesota Wild",
+      homeScore: 4,
+      awayScore: 2,
+      venue: "Ball Arena",
+    },
+    {
+      id: "fallback-nhl-2",
       league: "NHL",
       startTimeIso: isoFromNow(7),
       status: "scheduled",
