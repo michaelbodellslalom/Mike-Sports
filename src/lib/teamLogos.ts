@@ -134,7 +134,14 @@ export const teamLogoMap: Record<string, string> = {
   "University of Minnesota": `${ESPN}/ncaa/500/135.png`,
   "University of Minnesota football": `${ESPN}/ncaa/500/135.png`,
   "University of Minnesota basketball": `${ESPN}/ncaa/500/135.png`,
+  "University of Minnesota volleyball": `${ESPN}/ncaa/500/135.png`,
   "Minnesota Gophers": `${ESPN}/ncaa/500/135.png`,
+
+  // WNBA
+  "Minnesota Lynx": "https://a.espncdn.com/i/teamlogos/wnba/500/min.png",
+
+  // MLS
+  "Minnesota United": "https://a.espncdn.com/i/teamlogos/soccer/500/144.png",
 
   // PGA — try ESPN golf CDN; falls back to green badge in component if image 404s
   "PGA": "https://a.espncdn.com/i/teamlogos/golf/500/pgat.png",
