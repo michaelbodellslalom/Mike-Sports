@@ -776,95 +776,47 @@ export default function Home() {
 
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="schedule-title">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="schedule-title" className="text-lg font-semibold">Schedule</h2>
-          <div className="flex gap-2">
-            {(["day", "week", "month"] as const).map((window) => (
-              <button
-                key={window}
-                type="button"
-                onClick={() => setScheduleWindow(window)}
-                aria-pressed={scheduleWindow === window}
-                className={`rounded-md border px-3 py-1 text-xs font-semibold uppercase ${
-                  scheduleWindow === window
-                    ? "border-[var(--brand)] bg-emerald-50 text-emerald-900"
-                    : "border-[var(--border)] bg-white"
-                }`}
-              >
-                {window}
-              </button>
-            ))}
+          <div>
+            <h2 id="schedule-title" className="text-lg font-semibold">Today's Schedule</h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">3-5 games spread throughout the day, ranked by your favorites</p>
           </div>
         </div>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          Use day, week, and month windows to plan around your available watch time.
-        </p>
 
-        <div className="mt-3 space-y-2">
-          {scheduleGames.length === 0 ? (
-            <EmptyState message={`No scheduled games in the next ${scheduleWindow}.`} />
+        <div className="mt-4 space-y-3">
+          {scheduledTodayGames.length === 0 ? (
+            <EmptyState message="No games scheduled for today." />
           ) : (
-            scheduleGames.slice(0, 8).map((game) => (
-              <article key={game.id} className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm">
-                <TeamLogo teamName={game.awayTeam} size={24} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{game.awayTeam} at {game.homeTeam}</p>
-                  <p className="mt-0.5 text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(game.startTimeIso)}</p>
-                </div>
-                <TeamLogo teamName={game.homeTeam} size={24} />
-              </article>
-            ))
+            scheduledTodayGames.map((game, idx) => {
+              const watchOpts = watchOptions.filter((o) => o.gameId === game.id);
+              const entry = dailyWatchPlan.find((e) => e.gameId === game.id);
+              return (
+                <article key={game.id} className="flex items-stretch gap-3 rounded-lg border border-[var(--border)] bg-white overflow-hidden">
+                  <div className="flex w-12 shrink-0 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-emerald-100 font-bold text-emerald-700">
+                    <span className="text-lg">#{idx + 1}</span>
+                  </div>
+                  <div className="flex flex-1 items-center gap-2 px-3 py-2">
+                    <TeamLogo teamName={game.awayTeam} size={28} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{game.awayTeam} @ {game.homeTeam}</p>
+                      <p className="text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(game.startTimeIso)}</p>
+                      {entry && <p className="mt-1 text-xs text-emerald-700 font-medium">{entry.reason}</p>}
+                    </div>
+                    <TeamLogo teamName={game.homeTeam} size={28} />
+                  </div>
+                  {watchOpts.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-end gap-1 px-3 py-2 bg-slate-50 border-l border-[var(--border)]">
+                      {watchOpts.slice(0, 2).map((opt) => (
+                        <NetworkBadge key={`${game.id}-${opt.provider}`} name={opt.provider} />
+                      ))}
+                    </div>
+                  )}
+                </article>
+              );
+            })
           )}
         </div>
       </section>
 
-      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="watch-title" aria-busy={isLoadingWatch}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="watch-title" className="text-lg font-semibold">Where to watch</h2>
-          <span className="text-xs text-[var(--muted)]">Source: {providerConfig.watch.provider}</span>
-        </div>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          Coverage sources prioritize the selected matchup and fall back to likely national options when provider metadata is limited.
-        </p>
-
-        {watchGameCandidates.length > 0 ? (
-          <div className="mt-3">
-            <label htmlFor="watch-game" className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
-              Matchup
-            </label>
-            <select
-              id="watch-game"
-              value={activeWatchGameId}
-              onChange={(event) => setSelectedWatchGameId(event.target.value)}
-              className="mt-1 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm"
-            >
-              {watchGameCandidates.map((game) => (
-                <option key={game.id} value={game.id}>
-                  {game.awayTeam} at {game.homeTeam}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : null}
-
-        <div className="mt-3 space-y-2">
-          {isLoadingWatch ? <LoadingState label="Loading watch options..." /> : null}
-          {watchError ? <ErrorState message={watchError} /> : null}
-          {!isLoadingWatch && !watchError && displayedWatchOptions.length === 0 ? (
-            <EmptyState message="No watch options available yet. Add WATCHMODE API key to enable coverage data." />
-          ) : null}
-          {!isLoadingWatch && !watchError
-            ? displayedWatchOptions.slice(0, 6).map((option, index) => (
-                <article
-                  key={`${option.gameId}-${option.network ?? option.streamingService ?? index}`}
-                  className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm"
-                >
-                  <NetworkBadge name={option.network ?? option.streamingService ?? "Unknown"} />
-                  <p className="flex-1 text-xs text-[var(--muted)]">{option.notes ?? "Coverage details"}</p>
-                </article>
-              ))
-            : null}
-        </div>
-      </section>
 
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="tickets-title">
         <h2 id="tickets-title" className="text-lg font-semibold">Tickets near {zipCode}</h2>
@@ -927,46 +879,6 @@ export default function Home() {
                 <p className="mt-2 text-sm text-[var(--text)]">{recommendation.reason}</p>
               </article>
             ))
-          )}
-        </div>
-      </section>
-
-      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="watch-plan-title">
-        <h2 id="watch-plan-title" className="text-lg font-semibold">Daily watch plan</h2>
-        <p className="mt-1 text-xs text-[var(--muted)]">
-          Ordered by favorites first, then high-interest options, then overlap reduction.
-        </p>
-
-        <div className="mt-3 space-y-2">
-          {dailyWatchPlan.length === 0 ? (
-            <EmptyState message="No watch plan entries yet. As games load, this list will populate." />
-          ) : (
-            dailyWatchPlan.map((entry) => {
-              const game = games.find((item) => item.id === entry.gameId);
-              return (
-                <article key={entry.gameId} className="flex items-start gap-3 rounded-lg border border-[var(--border)] bg-white p-3">
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-bold text-emerald-700">
-                    #{entry.rank}
-                  </span>
-                  {game ? (
-                    <>
-                      <TeamLogo teamName={game.awayTeam} size={28} />
-                      <span className="mt-1 shrink-0 text-xs text-slate-400">@</span>
-                      <TeamLogo teamName={game.homeTeam} size={28} />
-                    </>
-                  ) : null}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium truncate">
-                        {game ? `${game.awayTeam} at ${game.homeTeam}` : fallbackGameLabel(entry.gameId)}
-                      </p>
-                      <p className="shrink-0 text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(entry.plannedStartIso)}</p>
-                    </div>
-                    <p className="mt-0.5 text-xs text-[var(--muted)]">{entry.reason}</p>
-                  </div>
-                </article>
-              );
-            })
           )}
         </div>
       </section>
