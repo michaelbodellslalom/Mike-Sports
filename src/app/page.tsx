@@ -360,9 +360,10 @@ export default function Home() {
   const todayGames = useMemo(() => displayedGames.filter((game) => isGameToday(game.startTimeIso)), [displayedGames]);
   const todayLiveGames = useMemo(() => todayGames.filter((game) => game.status === "live"), [todayGames]);
   const todayUpcomingGames = useMemo(() => todayGames.filter((game) => game.status === "scheduled"), [todayGames]);
+  const todayCompletedGames = useMemo(() => todayGames.filter((game) => game.status === "final" || game.status === "completed"), [todayGames]);
 
-  // Schedule section: 3-5 games spread throughout the day
-  const scheduledTodayGames = useMemo(() => spreadGamesInTimeSlots(todayUpcomingGames), [todayUpcomingGames]);
+  // Schedule section: 3-5 games spread throughout the day (prioritize live, then upcoming)
+  const scheduledTodayGames = useMemo(() => spreadGamesInTimeSlots([...todayLiveGames, ...todayUpcomingGames, ...todayCompletedGames]), [todayLiveGames, todayUpcomingGames, todayCompletedGames]);
 
   const scheduleGames = useMemo(
     () => displayedUpcomingGames.filter((game) => isWithinScheduleWindow(game.startTimeIso, scheduleWindow)),
