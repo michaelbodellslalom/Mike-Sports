@@ -85,6 +85,49 @@ function fallbackGameLabel(gameId: string): string {
   return "Featured matchup";
 }
 
+function isGameToday(gameStartIso: string, now = new Date()): boolean {
+  const gameDate = new Date(gameStartIso);
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  return gameDate >= todayStart && gameDate < tomorrowStart;
+}
+
+function getGameHour(gameStartIso: string): number {
+  return new Date(gameStartIso).getHours();
+}
+
+function spreadGamesInTimeSlots(games: Game[]): Game[] {
+  // Target time slots: 11am, 2:30pm, 4:30pm, 7pm, 10pm
+  const timeSlots = [11, 14.5, 16.5, 19, 22];
+  const assigned = new Set<string>();
+  const result: Game[] = [];
+
+  for (const slot of timeSlots) {
+    // Find closest unassigned game to this time slot
+    let closestGame: Game | null = null;
+    let closestDistance = Infinity;
+
+    for (const game of games) {
+      if (assigned.has(game.id)) continue;
+      const gameHour = getGameHour(game.startTimeIso);
+      const distance = Math.abs(gameHour - slot);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestGame = game;
+      }
+    }
+
+    if (closestGame) {
+      result.push(closestGame);
+      assigned.add(closestGame.id);
+      if (result.length >= 5) break; // Max 5 games
+    }
+  }
+
+  return result.length > 0 ? result : games.slice(0, 5);
+}
+
 const leagueColors: Record<string, string> = {
   NFL: "#4f3f9a",
   MLB: "#002d72",
@@ -184,7 +227,7 @@ function LeagueDot({ league }: { league?: LeagueCode }) {
 }
 
 export default function Home() {
-  const { favorites, toggleFavorite, zipCode, setZipCode, moveFavorite } = usePreferencesStore();
+  const { favorites, favoriteRanks, toggleFavorite, zipCode, setZipCode, moveFavorite } = usePreferencesStore();
   const [games, setGames] = useState<Game[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [watchOptions, setWatchOptions] = useState<WatchOption[]>([]);
@@ -312,6 +355,15 @@ export default function Home() {
     () => (upcomingGames.length > 0 ? upcomingGames : displayedGames.filter((game) => game.status === "scheduled")),
     [displayedGames, upcomingGames],
   );
+
+  // Today's games only
+  const todayGames = useMemo(() => displayedGames.filter((game) => isGameToday(game.startTimeIso)), [displayedGames]);
+  const todayLiveGames = useMemo(() => todayGames.filter((game) => game.status === "live"), [todayGames]);
+  const todayUpcomingGames = useMemo(() => todayGames.filter((game) => game.status === "scheduled"), [todayGames]);
+
+  // Schedule section: 3-5 games spread throughout the day
+  const scheduledTodayGames = useMemo(() => spreadGamesInTimeSlots(todayUpcomingGames), [todayUpcomingGames]);
+
   const scheduleGames = useMemo(
     () => displayedUpcomingGames.filter((game) => isWithinScheduleWindow(game.startTimeIso, scheduleWindow)),
     [displayedUpcomingGames, scheduleWindow],
@@ -351,10 +403,26 @@ export default function Home() {
   }, [scheduleGames, zipCode]);
   const recommendations = useMemo<Recommendation[]>(() => {
     const built = buildRecommendations(displayedGames, favorites).slice(0, 6);
-    return built.length > 0 ? built : fallbackRecommendations;
-  }, [displayedGames, favorites]);
+    // Sort by favorite ranks - lower rank (higher priority) comes first
+    const sorted = built.sort((a, b) => {
+      const aTeamRank = Math.min(
+        ...favorites
+          .map((fav, idx) => ({ fav, rank: favoriteRanks[fav] ?? Infinity }))
+          .filter((f) => a.gameId?.includes?.(f.fav) || a.gameId === f.fav)
+          .map((f) => f.rank)
+      );
+      const bTeamRank = Math.min(
+        ...favorites
+          .map((fav, idx) => ({ fav, rank: favoriteRanks[fav] ?? Infinity }))
+          .filter((f) => b.gameId?.includes?.(f.fav) || b.gameId === f.fav)
+          .map((f) => f.rank)
+      );
+      return aTeamRank - bTeamRank;
+    });
+    return sorted.length > 0 ? sorted : fallbackRecommendations;
+  }, [displayedGames, favorites, favoriteRanks]);
   const dailyWatchPlan = useMemo<WatchPlanEntry[]>(() => {
-    const sourceGames = scheduleGames.length > 0 ? scheduleGames : displayedGames;
+    const sourceGames = scheduledTodayGames.length > 0 ? scheduledTodayGames : scheduleGames.length > 0 ? scheduleGames : displayedGames;
     const built = buildDailyWatchPlan(sourceGames, favorites, 8);
     return built.length > 0 ? built : fallbackWatchPlan;
   }, [displayedGames, favorites, scheduleGames]);
@@ -371,7 +439,7 @@ export default function Home() {
       .filter((value): value is { recommendation: Recommendation; game: Game } => value !== null);
   }, [displayedGames, recommendations]);
   const displayedNews = useMemo(() => (news.length > 0 ? news : fallbackNews), [fallbackNews, news]);
-  const featuredGame = useMemo(() => displayedLiveGames[0] ?? displayedUpcomingGames[0] ?? displayedGames[0], [displayedGames, displayedLiveGames, displayedUpcomingGames]);
+  const featuredGame = useMemo(() => todayLiveGames[0] ?? todayUpcomingGames[0] ?? todayGames[0], [todayGames, todayLiveGames, todayUpcomingGames]);
   const featuredWatchOptions = useMemo(() => {
     if (!featuredGame) return [];
     const specific = watchOptions.filter((o) => o.gameId === featuredGame.id);
