@@ -735,7 +735,7 @@ export default function Home() {
           {isLoadingGames ? <LoadingState label="Loading latest games..." /> : null}
           {gameError ? <ErrorState message={gameError} /> : null}
           {!isLoadingGames && !gameError
-            ? displayedGames.slice(0, 8).map((game) => {
+            ? displayedGames.filter((game) => game.awayTeam && game.homeTeam).slice(0, 8).map((game) => {
                 const getStatusColor = (status: string): string => {
                   const statusLower = status.toLowerCase();
                   if (statusLower === 'live' || statusLower === 'in_play') {
