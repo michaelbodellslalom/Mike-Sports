@@ -735,24 +735,38 @@ export default function Home() {
           {isLoadingGames ? <LoadingState label="Loading latest games..." /> : null}
           {gameError ? <ErrorState message={gameError} /> : null}
           {!isLoadingGames && !gameError
-            ? displayedGames.slice(0, 8).map((game) => (
-                <article
-                  key={game.id}
-                  className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-white px-3 py-3 text-sm shadow-sm"
-                >
-                  <TeamLogo teamName={game.awayTeam} size={28} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{formatGameLine(game)}</p>
-                    <p className="mt-0.5 text-xs uppercase tracking-wide text-[var(--muted)]" suppressHydrationWarning>
-                      {formatLocalDateTime(game.startTimeIso)}{game.venue ? ` • ${game.venue}` : ""}
-                    </p>
-                  </div>
-                  <TeamLogo teamName={game.homeTeam} size={28} />
-                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold uppercase text-slate-700">
-                    {game.status}
-                  </span>
-                </article>
-              ))
+            ? displayedGames.slice(0, 8).map((game) => {
+                const getStatusColor = (status: string): string => {
+                  const statusLower = status.toLowerCase();
+                  if (statusLower === 'live' || statusLower === 'in_play') {
+                    return 'bg-orange-100 text-orange-900';
+                  } else if (statusLower === 'scheduled' || statusLower === 'upcoming') {
+                    return 'bg-blue-100 text-blue-900';
+                  } else if (statusLower === 'final' || statusLower === 'finished' || statusLower === 'completed') {
+                    return 'bg-green-100 text-green-900';
+                  }
+                  return 'bg-slate-100 text-slate-900';
+                };
+
+                return (
+                  <article
+                    key={game.id}
+                    className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-white px-3 py-3 text-sm shadow-sm"
+                  >
+                    <TeamLogo teamName={game.awayTeam} size={28} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{formatGameLine(game)}</p>
+                      <p className="mt-0.5 text-xs uppercase tracking-wide text-[var(--muted)]" suppressHydrationWarning>
+                        {formatLocalDateTime(game.startTimeIso)}{game.venue ? ` • ${game.venue}` : ""}
+                      </p>
+                    </div>
+                    <TeamLogo teamName={game.homeTeam} size={28} />
+                    <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${getStatusColor(game.status)}`}>
+                      {game.status}
+                    </span>
+                  </article>
+                );
+              })
             : null}
         </div>
       </section>
