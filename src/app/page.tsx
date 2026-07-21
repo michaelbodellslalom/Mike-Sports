@@ -638,7 +638,7 @@ export default function Home() {
                   <TeamLogo teamName={game.awayTeam} size={28} />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{formatGameLine(game)}</p>
-                    <p className="mt-0.5 text-xs uppercase tracking-wide text-[var(--muted)]">
+                    <p className="mt-0.5 text-xs uppercase tracking-wide text-[var(--muted)]" suppressHydrationWarning>
                       {formatLocalDateTime(game.startTimeIso)}{game.venue ? ` • ${game.venue}` : ""}
                     </p>
                   </div>
@@ -693,7 +693,7 @@ export default function Home() {
                   )}
                   <div className="flex-1 px-3 py-2">
                     <p className="font-medium leading-snug">{item.title}</p>
-                    <p className="mt-1 text-xs text-[var(--muted)]">
+                    <p className="mt-1 text-xs text-[var(--muted)]" suppressHydrationWarning>
                       {item.source} • {formatLocalDateTime(item.publishedAtIso)}
                     </p>
                   </div>
@@ -737,7 +737,7 @@ export default function Home() {
                 <TeamLogo teamName={game.awayTeam} size={24} />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{game.awayTeam} at {game.homeTeam}</p>
-                  <p className="mt-0.5 text-xs text-[var(--muted)]">{formatLocalDateTime(game.startTimeIso)}</p>
+                  <p className="mt-0.5 text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(game.startTimeIso)}</p>
                 </div>
                 <TeamLogo teamName={game.homeTeam} size={24} />
               </article>
@@ -852,7 +852,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <p className="mt-1 text-xs text-[var(--muted)]">{formatLocalDateTime(game.startTimeIso)} • {game.league}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(game.startTimeIso)} • {game.league}</p>
                 <p className="mt-2 text-sm text-[var(--text)]">{recommendation.reason}</p>
               </article>
             ))
@@ -889,7 +889,7 @@ export default function Home() {
                       <p className="text-sm font-medium truncate">
                         {game ? `${game.awayTeam} at ${game.homeTeam}` : fallbackGameLabel(entry.gameId)}
                       </p>
-                      <p className="shrink-0 text-xs text-[var(--muted)]">{formatLocalDateTime(entry.plannedStartIso)}</p>
+                      <p className="shrink-0 text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(entry.plannedStartIso)}</p>
                     </div>
                     <p className="mt-0.5 text-xs text-[var(--muted)]">{entry.reason}</p>
                   </div>
