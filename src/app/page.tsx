@@ -680,6 +680,49 @@ export default function Home() {
         </div>
       </header>
 
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="schedule-title">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 id="schedule-title" className="text-lg font-semibold">Today's Schedule</h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">3-5 games spread throughout the day, ranked by your favorites</p>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {scheduledTodayGames.length === 0 ? (
+            <EmptyState message="No games scheduled for today." />
+          ) : (
+            scheduledTodayGames.map((game, idx) => {
+              const watchOpts = watchOptions.filter((o) => o.gameId === game.id);
+              const entry = dailyWatchPlan.find((e) => e.gameId === game.id);
+              return (
+                <article key={game.id} className="flex items-stretch gap-3 rounded-lg border border-[var(--border)] bg-white overflow-hidden">
+                  <div className="flex w-12 shrink-0 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-emerald-100 font-bold text-emerald-700">
+                    <span className="text-lg">#{idx + 1}</span>
+                  </div>
+                  <div className="flex flex-1 items-center gap-2 px-3 py-2">
+                    <TeamLogo teamName={game.awayTeam} size={28} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{game.awayTeam} @ {game.homeTeam}</p>
+                      <p className="text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(game.startTimeIso)}</p>
+                      {entry && <p className="mt-1 text-xs text-emerald-700 font-medium">{entry.reason}</p>}
+                    </div>
+                    <TeamLogo teamName={game.homeTeam} size={28} />
+                  </div>
+                  {watchOpts.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-end gap-1 px-3 py-2 bg-slate-50 border-l border-[var(--border)]">
+                      {watchOpts.slice(0, 2).map((opt) => (
+                        <NetworkBadge key={`${game.id}-${opt.provider}`} name={opt.provider} />
+                      ))}
+                    </div>
+                  )}
+                </article>
+              );
+            })
+          )}
+        </div>
+      </section>
+
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="scores-title" aria-busy={isLoadingGames}>
         <div className="flex items-center justify-between gap-3">
           <h2 id="scores-title" className="text-lg font-semibold">Scores</h2>
@@ -772,49 +815,6 @@ export default function Home() {
             Load more articles ({displayedNews.length - newsPage * 5} remaining)
           </button>
         )}
-      </section>
-
-      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="schedule-title">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 id="schedule-title" className="text-lg font-semibold">Today's Schedule</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">3-5 games spread throughout the day, ranked by your favorites</p>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          {scheduledTodayGames.length === 0 ? (
-            <EmptyState message="No games scheduled for today." />
-          ) : (
-            scheduledTodayGames.map((game, idx) => {
-              const watchOpts = watchOptions.filter((o) => o.gameId === game.id);
-              const entry = dailyWatchPlan.find((e) => e.gameId === game.id);
-              return (
-                <article key={game.id} className="flex items-stretch gap-3 rounded-lg border border-[var(--border)] bg-white overflow-hidden">
-                  <div className="flex w-12 shrink-0 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-emerald-100 font-bold text-emerald-700">
-                    <span className="text-lg">#{idx + 1}</span>
-                  </div>
-                  <div className="flex flex-1 items-center gap-2 px-3 py-2">
-                    <TeamLogo teamName={game.awayTeam} size={28} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{game.awayTeam} @ {game.homeTeam}</p>
-                      <p className="text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(game.startTimeIso)}</p>
-                      {entry && <p className="mt-1 text-xs text-emerald-700 font-medium">{entry.reason}</p>}
-                    </div>
-                    <TeamLogo teamName={game.homeTeam} size={28} />
-                  </div>
-                  {watchOpts.length > 0 && (
-                    <div className="flex flex-wrap items-center justify-end gap-1 px-3 py-2 bg-slate-50 border-l border-[var(--border)]">
-                      {watchOpts.slice(0, 2).map((opt) => (
-                        <NetworkBadge key={`${game.id}-${opt.provider}`} name={opt.provider} />
-                      ))}
-                    </div>
-                  )}
-                </article>
-              );
-            })
-          )}
-        </div>
       </section>
 
 
