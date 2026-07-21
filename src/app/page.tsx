@@ -683,7 +683,7 @@ export default function Home() {
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="schedule-title">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 id="schedule-title" className="text-lg font-semibold">Today's Schedule</h2>
+            <h2 id="schedule-title" className="text-lg font-semibold">Today&apos;s Schedule</h2>
             <p className="mt-1 text-sm text-[var(--muted)]">3-5 games spread throughout the day, ranked by your favorites</p>
           </div>
         </div>
