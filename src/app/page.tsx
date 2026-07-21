@@ -712,7 +712,7 @@ export default function Home() {
                   {watchOpts.length > 0 && (
                     <div className="flex flex-wrap items-center justify-end gap-1 px-3 py-2 bg-slate-50 border-l border-[var(--border)]">
                       {watchOpts.slice(0, 2).map((opt) => (
-                        <NetworkBadge key={`${game.id}-${opt.provider}`} name={opt.provider} />
+                        <NetworkBadge key={`${game.id}-${opt.network ?? opt.streamingService}`} name={opt.network ?? opt.streamingService ?? "Unknown"} />
                       ))}
                     </div>
                   )}
