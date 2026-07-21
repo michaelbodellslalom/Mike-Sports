@@ -703,7 +703,7 @@ export default function Home() {
                   <div className="flex w-12 shrink-0 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-emerald-100 font-bold text-emerald-700">
                     <span className="text-lg">#{idx + 1}</span>
                   </div>
-                  <div className="flex flex-1 items-center gap-1 px-3 py-2">
+                  <div className="flex flex-1 items-center gap-0.5 px-3 py-2">
                     <TeamLogo teamName={game.awayTeam} size={28} />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{game.awayTeam} @ {game.homeTeam}</p>
@@ -766,16 +766,18 @@ export default function Home() {
                   return (
                     <article
                       key={game.id}
-                      className="flex items-center gap-1 rounded-lg border border-[var(--border)] bg-white px-3 py-3 text-sm shadow-sm"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-white px-3 py-3 text-sm shadow-sm"
                     >
-                      <TeamLogo teamName={game.awayTeam} size={28} />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{formatGameLine(game)}</p>
-                        <p className="mt-0.5 text-xs uppercase tracking-wide text-[var(--muted)]" suppressHydrationWarning>
-                          {formatLocalDateTime(game.startTimeIso)}{game.venue ? ` • ${game.venue}` : ""}
-                        </p>
+                      <div className="flex items-center gap-0.5 min-w-0">
+                        <TeamLogo teamName={game.awayTeam} size={28} />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{formatGameLine(game)}</p>
+                          <p className="mt-0.5 text-xs uppercase tracking-wide text-[var(--muted)]" suppressHydrationWarning>
+                            {formatLocalDateTime(game.startTimeIso)}{game.venue ? ` • ${game.venue}` : ""}
+                          </p>
+                        </div>
+                        <TeamLogo teamName={game.homeTeam} size={28} />
                       </div>
-                      <TeamLogo teamName={game.homeTeam} size={28} />
                       <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${getStatusColor(game.status)}`}>
                         {game.status}
                       </span>
