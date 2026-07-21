@@ -14,7 +14,7 @@ import {
   fallbackWatchOptions,
   fallbackWatchPlan,
 } from "@/data/fallbackContent";
-import { initialFavoriteOptions } from "@/data/favorites";
+import { initialFavoriteOptions, allAvailableOptions } from "@/data/favorites";
 import { inferLeagueFromFavorite } from "@/lib/favoritesToLeague";
 import { providerConfig } from "@/lib/api/providers";
 import { formatLocalDateTime, isWithinScheduleWindow, type ScheduleWindow } from "@/lib/dateTime";
@@ -917,8 +917,9 @@ export default function Home() {
       </section>
 
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" id="preferences-section" aria-labelledby="preferences-title">
-        <h2 id="preferences-title" className="text-lg font-semibold">Preferences bootstrap</h2>
-        <p className="mt-2 text-sm text-[var(--muted)]">Selected favorites: {selectedCount}</p>
+        <h2 id="preferences-title" className="text-lg font-semibold">My Preferences</h2>
+        <p className="mt-1 text-sm text-[var(--muted)]">Customize your sports dashboard</p>
+
         <label className="mt-4 block text-sm font-medium" htmlFor="zipcode">
           ZIP code
         </label>
@@ -943,26 +944,56 @@ export default function Home() {
           <span role="status" aria-live="polite" className="text-xs text-[var(--muted)]">{geoMessage}</span>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {initialFavoriteOptions.map((option) => {
-            const selected = favorites.includes(option);
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => toggleFavorite(option)}
-                aria-pressed={selected}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
-                  selected
-                    ? "border-[var(--brand)] bg-emerald-50 text-emerald-900"
-                    : "border-[var(--border)] bg-white text-[var(--text)]"
-                }`}
-              >
-                <TeamLogo teamName={option} size={20} />
-                {option}
-              </button>
-            );
-          })}
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold">Your Favorites ({selectedCount})</h3>
+          <p className="mt-1 text-xs text-[var(--muted)]">Click to remove from your dashboard</p>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {allAvailableOptions.map((option) => {
+              const selected = favorites.includes(option);
+              if (!selected) return null;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => toggleFavorite(option)}
+                  aria-pressed={true}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-[var(--brand)] bg-emerald-50 px-3 py-2 text-left text-sm transition hover:bg-emerald-100"
+                >
+                  <span className="flex items-center gap-2">
+                    <TeamLogo teamName={option} size={20} />
+                    {option}
+                  </span>
+                  <span className="text-lg font-bold text-emerald-600">−</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold">Available to Add ({allAvailableOptions.length - selectedCount})</h3>
+          <p className="mt-1 text-xs text-[var(--muted)]">Click to add to your dashboard</p>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {allAvailableOptions.map((option) => {
+              const selected = favorites.includes(option);
+              if (selected) return null;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => toggleFavorite(option)}
+                  aria-pressed={false}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-left text-sm transition hover:border-[var(--brand)] hover:bg-emerald-50"
+                >
+                  <span className="flex items-center gap-2">
+                    <TeamLogo teamName={option} size={20} />
+                    {option}
+                  </span>
+                  <span className="text-lg font-bold text-gray-400">+</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
       </main>
