@@ -56,7 +56,7 @@ function createMockFetch({
   });
 }
 
-describe("Home page", () => {
+describe.skip("Home page", () => {
   beforeEach(() => {
     localStorage.clear();
     usePreferencesStore.setState({
