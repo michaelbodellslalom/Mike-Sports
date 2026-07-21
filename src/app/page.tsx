@@ -184,7 +184,7 @@ function LeagueDot({ league }: { league?: LeagueCode }) {
 }
 
 export default function Home() {
-  const { favorites, toggleFavorite, zipCode, setZipCode } = usePreferencesStore();
+  const { favorites, toggleFavorite, zipCode, setZipCode, moveFavorite } = usePreferencesStore();
   const [games, setGames] = useState<Game[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [watchOptions, setWatchOptions] = useState<WatchOption[]>([]);
@@ -198,6 +198,7 @@ export default function Home() {
   const [scheduleWindow, setScheduleWindow] = useState<ScheduleWindow>("day");
   const [selectedWatchGameId, setSelectedWatchGameId] = useState<string>("");
   const [showAllFavorites, setShowAllFavorites] = useState(false);
+  const [newsPage, setNewsPage] = useState(1);
 
   const selectedCount = useMemo(() => favorites.length, [favorites.length]);
   const favoriteLeagues = useMemo<LeagueCode[]>(() => {
@@ -611,24 +612,6 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="snapshot-title">
-        <h2 id="snapshot-title" className="text-lg font-semibold">Today snapshot</h2>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border border-[var(--border)] bg-white p-3">
-                <p className="text-xs uppercase tracking-wide text-[var(--muted)]">League view</p>
-                <p className="mt-1 text-xl font-bold">{favoriteLeagues.join(" / ")}</p>
-          </div>
-          <div className="rounded-lg border border-[var(--border)] bg-white p-3">
-            <p className="text-xs uppercase tracking-wide text-[var(--muted)]">Live now</p>
-            <p className="mt-1 text-xl font-bold">{displayedLiveGames.length}</p>
-          </div>
-          <div className="rounded-lg border border-[var(--border)] bg-white p-3">
-            <p className="text-xs uppercase tracking-wide text-[var(--muted)]">Upcoming</p>
-            <p className="mt-1 text-xl font-bold">{displayedUpcomingGames.length}</p>
-          </div>
-        </div>
-      </section>
-
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="scores-title" aria-busy={isLoadingGames}>
         <div className="flex items-center justify-between gap-3">
           <h2 id="scores-title" className="text-lg font-semibold">Scores</h2>
@@ -675,7 +658,7 @@ export default function Home() {
           {isLoadingNews ? <LoadingState label="Loading headlines..." /> : null}
           {newsError ? <ErrorState message={newsError} /> : null}
           {!isLoadingNews && !newsError
-            ? displayedNews.slice(0, 8).map((item) => (
+            ? displayedNews.slice(0, newsPage * 5).map((item) => (
                 <a
                   key={item.id}
                   href={item.url}
@@ -712,6 +695,15 @@ export default function Home() {
               ))
             : null}
         </div>
+        {!isLoadingNews && !newsError && displayedNews.length > newsPage * 5 && (
+          <button
+            type="button"
+            onClick={() => setNewsPage((p) => p + 1)}
+            className="mt-4 w-full rounded-lg border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--brand)] transition hover:bg-emerald-50"
+          >
+            Load more articles ({displayedNews.length - newsPage * 5} remaining)
+          </button>
+        )}
       </section>
 
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="schedule-title">
@@ -911,14 +903,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="providers-title">
-        <h2 id="providers-title" className="text-lg font-semibold">Provider choices</h2>
-        <ul className="mt-3 space-y-2 text-sm text-[var(--muted)]">
-          <li>Sports: {providerConfig.sports.provider}</li>
-          <li>News: {providerConfig.news.provider}</li>
-          <li>Watch coverage: {providerConfig.watch.provider}</li>
-        </ul>
-      </section>
 
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" id="preferences-section" aria-labelledby="preferences-title">
         <h2 id="preferences-title" className="text-lg font-semibold">My Preferences</h2>
@@ -950,25 +934,51 @@ export default function Home() {
 
         <div className="mt-6">
           <h3 className="text-sm font-semibold">Your Favorites ({selectedCount})</h3>
-          <p className="mt-1 text-xs text-[var(--muted)]">Click to remove from your dashboard</p>
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {allAvailableOptions.map((option) => {
+          <p className="mt-1 text-xs text-[var(--muted)]">Ranked by importance. Drag or use arrows to reorder. These rankings impact your recommendations.</p>
+          <div className="mt-3 space-y-1">
+            {allAvailableOptions.map((option, index) => {
               const selected = favorites.includes(option);
               if (!selected) return null;
+              const favoriteIndex = favorites.indexOf(option);
               return (
-                <button
+                <div
                   key={option}
-                  type="button"
-                  onClick={() => toggleFavorite(option)}
-                  aria-pressed={true}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-[var(--brand)] bg-emerald-50 px-3 py-2 text-left text-sm transition hover:bg-emerald-100"
+                  className="flex items-center justify-between gap-2 rounded-lg border border-[var(--brand)] bg-emerald-50 px-3 py-2 text-left text-sm transition"
                 >
                   <span className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-emerald-700">#{favoriteIndex + 1}</span>
                     <TeamLogo teamName={option} size={20} />
-                    {option}
+                    <span className="flex-1">{option}</span>
                   </span>
-                  <span className="text-lg font-bold text-emerald-600">−</span>
-                </button>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveFavorite(option, "up")}
+                      disabled={favoriteIndex === 0}
+                      className="rounded px-2 py-1 text-xs font-bold text-emerald-700 transition disabled:opacity-25 hover:bg-emerald-200"
+                      aria-label="Move up"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveFavorite(option, "down")}
+                      disabled={favoriteIndex === favorites.length - 1}
+                      className="rounded px-2 py-1 text-xs font-bold text-emerald-700 transition disabled:opacity-25 hover:bg-emerald-200"
+                      aria-label="Move down"
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite(option)}
+                      aria-pressed={true}
+                      className="rounded px-2 py-1 text-xs font-bold text-emerald-700 transition hover:bg-emerald-200"
+                    >
+                      −
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>
