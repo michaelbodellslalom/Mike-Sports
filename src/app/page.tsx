@@ -100,6 +100,14 @@ const sportBadges: Record<string, { text: string; bg: string; fg: string }> = {
   PGA: { text: "PGA", bg: "#1a7a40", fg: "#fff" },
   "PGA Tour": { text: "PGA", bg: "#1a7a40", fg: "#fff" },
   UFC: { text: "UFC", bg: "#cc0000", fg: "#fff" },
+  NFL: { text: "NFL", bg: "#003087", fg: "#fff" },
+  NBA: { text: "NBA", bg: "#1d428a", fg: "#fff" },
+  MLB: { text: "MLB", bg: "#12144d", fg: "#fff" },
+  NHL: { text: "NHL", bg: "#111111", fg: "#fff" },
+  MLS: { text: "MLS", bg: "#1a5c3a", fg: "#fff" },
+  WNBA: { text: "WNB", bg: "#c4122e", fg: "#fff" },
+  NCAAF: { text: "CFB", bg: "#8b0000", fg: "#fff" },
+  NCAAB: { text: "CBK", bg: "#1a1a1a", fg: "#fff" },
 };
 
 function TeamLogo({ teamName, size = 28 }: { teamName: string | null | undefined; size?: number }) {
@@ -488,33 +496,29 @@ export default function Home() {
               Track your favorite teams, scan the biggest storylines, find where to watch, and get a ranked viewing plan without bouncing between apps.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
-              {(showAllFavorites ? initialFavoriteOptions : initialFavoriteOptions.slice(0, 8)).map((option) => {
-                const selected = favorites.includes(option);
-                return (
+              {(() => {
+                const toDisplay = showAllFavorites ? favorites : favorites.slice(0, 8);
+                return toDisplay.map((option) => (
                   <button
                     key={option}
                     type="button"
                     onClick={() => toggleFavorite(option)}
-                    aria-pressed={selected}
-                    title={selected ? "Click to remove" : "Click to add"}
-                    className={`flex items-center gap-1.5 rounded-full border py-1 pl-1.5 pr-3 text-xs font-semibold transition ${
-                      selected
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-900 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                        : "border-slate-200 bg-slate-50 text-slate-400 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
-                    }`}
+                    aria-pressed={true}
+                    title="Click to remove"
+                    className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
                   >
                     <TeamLogo teamName={option} size={20} />
                     {option}
                   </button>
-                );
-              })}
-              {initialFavoriteOptions.length > 8 && (
+                ));
+              })()}
+              {favorites.length > 8 && (
                 <button
                   type="button"
                   onClick={() => setShowAllFavorites((v) => !v)}
                   className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--muted)] transition hover:bg-slate-50"
                 >
-                  {showAllFavorites ? "Show less" : `+${initialFavoriteOptions.length - 8} more`}
+                  {showAllFavorites ? "Show less" : `+${favorites.length - 8} more`}
                 </button>
               )}
             </div>
