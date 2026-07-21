@@ -89,7 +89,7 @@ describe("Home page", () => {
     expect(zipInput).toHaveValue("80222");
 
     await waitFor(() => {
-      expect(screen.getByText(/no games found/i)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /green bay packers at minnesota vikings/i })).toBeInTheDocument();
     });
   });
 
@@ -127,8 +127,9 @@ describe("Home page", () => {
 
     render(<Home />);
 
-    expect(await screen.findByText(/no headlines returned/i)).toBeInTheDocument();
-    expect(await screen.findByText(/no watch options available yet/i)).toBeInTheDocument();
-    expect(await screen.findByText(/no ticket links available/i)).toBeInTheDocument();
+    expect(await screen.findByText(/vikings lean into explosive play-action packages/i)).toBeInTheDocument();
+    expect(await screen.findByText(/fallback coverage suggestion while live provider data is limited/i)).toBeInTheDocument();
+    const ticketHints = await screen.findAllByText(/ticketmaster search for zip 80222/i);
+    expect(ticketHints.length).toBeGreaterThan(0);
   });
 });

@@ -1,5 +1,4 @@
 import { getJson } from "@/lib/api/http";
-import { providerConfig } from "@/lib/api/providers";
 import { normalizeNewsApiArticles } from "@/lib/api/normalize";
 import { env } from "@/lib/env";
 import type { LeagueCode, NewsItem } from "@/types/domain";
@@ -11,12 +10,13 @@ type NewsApiResponse = {
     title: string;
     url: string;
     publishedAt: string;
+    urlToImage?: string | null;
     source: { name: string };
   }>;
 };
 
 export async function fetchNewsByQuery(query: string, league?: LeagueCode): Promise<NewsItem[]> {
-  if (!env.NEXT_PUBLIC_NEWSAPI_KEY) {
+  if (!env.NEWSAPI_KEY) {
     return [];
   }
 
@@ -24,11 +24,11 @@ export async function fetchNewsByQuery(query: string, league?: LeagueCode): Prom
     q: query,
     sortBy: "publishedAt",
     pageSize: "20",
-    apiKey: env.NEXT_PUBLIC_NEWSAPI_KEY,
+    apiKey: env.NEWSAPI_KEY,
     language: "en",
   });
 
-  const url = `${providerConfig.news.baseUrl}/everything?${params.toString()}`;
+  const url = `${env.NEWSAPI_BASE_URL}/everything?${params.toString()}`;
   const data = await getJson<NewsApiResponse>(url, {
     retries: 2,
     timeoutMs: 9000,

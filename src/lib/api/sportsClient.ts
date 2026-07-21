@@ -1,5 +1,5 @@
 import { getJson } from "@/lib/api/http";
-import { providerConfig } from "@/lib/api/providers";
+import { env } from "@/lib/env";
 import { normalizeSportsDbEvents } from "@/lib/api/normalize";
 import type { Game, LeagueCode } from "@/types/domain";
 
@@ -35,7 +35,7 @@ export async function fetchLeagueGames(league: LeagueCode): Promise<Game[]> {
     return [];
   }
 
-  const url = `${providerConfig.sports.baseUrl}/eventsnextleague.php?id=${leagueId}`;
+  const url = `${env.THESPORTSDB_BASE_URL}/eventsnextleague.php?id=${leagueId}`;
   const data = await getJson<SportsDbEventsResponse>(url, {
     retries: 2,
     timeoutMs: 9000,

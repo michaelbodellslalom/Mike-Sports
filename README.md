@@ -38,9 +38,9 @@ cp .env.example .env.local
 
 3. Add API keys to `.env.local`:
 
-- `NEXT_PUBLIC_NEWSAPI_KEY`
-- `NEXT_PUBLIC_WATCHMODE_API_KEY`
-- `NEXT_PUBLIC_THESPORTSDB_API_KEY` (optional, depending on provider tier)
+- `NEWSAPI_KEY`
+- `WATCHMODE_API_KEY`
+- `THESPORTSDB_API_KEY` (optional, depending on provider tier)
 
 4. Start dev server:
 
@@ -54,12 +54,14 @@ npm run dev
 
 Required/optional values are documented in [.env.example](.env.example):
 
-- `NEXT_PUBLIC_THESPORTSDB_BASE_URL`
-- `NEXT_PUBLIC_THESPORTSDB_API_KEY`
-- `NEXT_PUBLIC_NEWSAPI_BASE_URL`
-- `NEXT_PUBLIC_NEWSAPI_KEY`
-- `NEXT_PUBLIC_WATCHMODE_BASE_URL`
-- `NEXT_PUBLIC_WATCHMODE_API_KEY`
+- `THESPORTSDB_BASE_URL`
+- `THESPORTSDB_API_KEY`
+- `NEWSAPI_BASE_URL`
+- `NEWSAPI_KEY`
+- `WATCHMODE_BASE_URL`
+- `WATCHMODE_API_KEY`
+
+Legacy `NEXT_PUBLIC_*` names are still accepted for backward compatibility, but server-side names are preferred.
 
 ## Available scripts
 

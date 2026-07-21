@@ -17,6 +17,7 @@ type NewsApiArticle = {
   title: string;
   url: string;
   publishedAt: string;
+  urlToImage?: string | null;
   source: { name: string };
 };
 
@@ -67,6 +68,7 @@ export function normalizeNewsApiArticles(
     source: article.source.name,
     publishedAtIso: article.publishedAt,
     url: article.url,
+    imageUrl: article.urlToImage ?? undefined,
     relatedLeague: league,
   }));
 }

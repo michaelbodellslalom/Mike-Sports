@@ -35,6 +35,7 @@ export type NewsItem = {
   source: string;
   publishedAtIso: string;
   url: string;
+  imageUrl?: string;
   relatedLeague?: LeagueCode;
   relatedTeam?: string;
 };

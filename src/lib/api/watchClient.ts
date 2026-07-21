@@ -1,5 +1,4 @@
 import { getJson } from "@/lib/api/http";
-import { providerConfig } from "@/lib/api/providers";
 import { env } from "@/lib/env";
 import type { WatchOption } from "@/types/domain";
 
@@ -13,17 +12,17 @@ type WatchmodeSourceResponse = Array<{
 }>;
 
 export async function fetchWatchOptionsByTitle(gameId: string, title: string): Promise<WatchOption[]> {
-  if (!env.NEXT_PUBLIC_WATCHMODE_API_KEY) {
+  if (!env.WATCHMODE_API_KEY) {
     return [];
   }
 
   const searchParams = new URLSearchParams({
-    apiKey: env.NEXT_PUBLIC_WATCHMODE_API_KEY,
+    apiKey: env.WATCHMODE_API_KEY,
     search_field: "name",
     search_value: title,
   });
 
-  const searchUrl = `${providerConfig.watch.baseUrl}/search/?${searchParams.toString()}`;
+  const searchUrl = `${env.WATCHMODE_BASE_URL}/search/?${searchParams.toString()}`;
   const searchData = await getJson<WatchmodeSearchResponse>(searchUrl, {
     retries: 1,
     timeoutMs: 8000,
@@ -37,7 +36,7 @@ export async function fetchWatchOptionsByTitle(gameId: string, title: string): P
     return [];
   }
 
-  const sourcesUrl = `${providerConfig.watch.baseUrl}/title/${bestMatch.id}/sources/?apiKey=${env.NEXT_PUBLIC_WATCHMODE_API_KEY}`;
+  const sourcesUrl = `${env.WATCHMODE_BASE_URL}/title/${bestMatch.id}/sources/?apiKey=${env.WATCHMODE_API_KEY}`;
   const sourceData = await getJson<WatchmodeSourceResponse>(sourcesUrl, {
     retries: 1,
     timeoutMs: 8000,
