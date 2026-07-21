@@ -518,6 +518,13 @@ export default function Home() {
                 </button>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => document.getElementById("preferences-section")?.scrollIntoView({ behavior: "smooth" })}
+              className="mt-3 text-xs font-semibold text-[var(--brand)] underline transition hover:text-emerald-700"
+            >
+              Manage favorites
+            </button>
           </div>
 
           <div className="rounded-2xl border border-[var(--border)] bg-slate-950 p-5 text-white">
@@ -909,7 +916,7 @@ export default function Home() {
         </ul>
       </section>
 
-      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="preferences-title">
+      <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" id="preferences-section" aria-labelledby="preferences-title">
         <h2 id="preferences-title" className="text-lg font-semibold">Preferences bootstrap</h2>
         <p className="mt-2 text-sm text-[var(--muted)]">Selected favorites: {selectedCount}</p>
         <label className="mt-4 block text-sm font-medium" htmlFor="zipcode">
