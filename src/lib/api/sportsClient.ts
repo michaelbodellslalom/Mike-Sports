@@ -14,6 +14,8 @@ type SportsDbEventsResponse = {
     strAwayTeam: string;
     intHomeScore?: string;
     intAwayScore?: string;
+    strProgress?: string;
+    strClock?: string;
     strVenue?: string;
   }> | null;
 };

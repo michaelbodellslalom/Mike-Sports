@@ -60,9 +60,6 @@ function buildNewsQuery(league: LeagueCode, favorites: string[]): string {
 }
 
 function formatGameLine(game: Game): string {
-  if (game.status === "final" || game.status === "live") {
-    return `${game.awayTeam} ${game.awayScore ?? 0} at ${game.homeTeam} ${game.homeScore ?? 0}`;
-  }
   return `${game.awayTeam} at ${game.homeTeam}`;
 }
 
@@ -259,6 +256,35 @@ export default function Home() {
   const [newsPage, setNewsPage] = useState(1);
 
   const selectedCount = useMemo(() => favorites.length, [favorites.length]);
+  const favoriteCollageTeams = useMemo(
+    () => (favorites.length > 0 ? favorites : initialFavoriteOptions.slice(0, 12)),
+    [favorites],
+  );
+  const collageTiles = useMemo(() => {
+    if (favoriteCollageTeams.length === 0) {
+      return [] as Array<{
+        id: string;
+        teamName: string;
+        offsetX: number;
+        offsetY: number;
+        rotate: number;
+        scale: number;
+        opacity: number;
+      }>;
+    }
+
+    return Array.from({ length: 144 }, (_, index) => {
+      return {
+        id: `collage-${index}`,
+        teamName: favoriteCollageTeams[index % favoriteCollageTeams.length],
+        offsetX: ((index * 13) % 7) - 3,
+        offsetY: ((index * 17) % 7) - 3,
+        rotate: ((index * 17) % 24) - 12,
+        scale: 0.86 + ((index * 11) % 10) / 100,
+        opacity: 0.18 + ((index * 5) % 7) / 100,
+      };
+    });
+  }, [favoriteCollageTeams]);
   const favoriteLeagues = useMemo<LeagueCode[]>(() => {
     const leagues = favorites.map((favorite) => inferLeagueFromFavorite(favorite));
     return Array.from(new Set(leagues));
@@ -380,7 +406,20 @@ export default function Home() {
   const todayCompletedGames = useMemo(() => todayGames.filter((game) => game.status === "final"), [todayGames]);
 
   // Schedule section: 3-5 games spread throughout the day (prioritize live, then upcoming)
-  const scheduledTodayGames = useMemo(() => spreadGamesInTimeSlots([...todayLiveGames, ...todayUpcomingGames, ...todayCompletedGames]), [todayLiveGames, todayUpcomingGames, todayCompletedGames]);
+  const scheduledTodayGames = useMemo(() => {
+    const rankedGames = spreadGamesInTimeSlots([...todayLiveGames, ...todayUpcomingGames, ...todayCompletedGames]);
+    if (rankedGames.length < 2) {
+      return rankedGames;
+    }
+
+    const firstGame = rankedGames[0];
+    const secondGame = rankedGames[1];
+    return [
+      { ...secondGame, startTimeIso: firstGame.startTimeIso },
+      { ...firstGame, startTimeIso: secondGame.startTimeIso },
+      ...rankedGames.slice(2),
+    ];
+  }, [todayLiveGames, todayUpcomingGames, todayCompletedGames]);
 
   const scheduleGames = useMemo(
     () => displayedUpcomingGames.filter((game) => isWithinScheduleWindow(game.startTimeIso, scheduleWindow)),
@@ -574,7 +613,23 @@ export default function Home() {
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
-      <main id="main-content" className="mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-8">
+      {collageTiles.length > 0 ? (
+        <div className="logo-collage-bg" aria-hidden="true">
+          {collageTiles.map((tile) => (
+            <div
+              key={tile.id}
+              className="logo-collage-tile"
+              style={{
+                opacity: tile.opacity,
+                transform: `translate(${tile.offsetX}px, ${tile.offsetY}px) rotate(${tile.rotate}deg) scale(${tile.scale})`,
+              }}
+            >
+              <TeamLogo teamName={tile.teamName} size={46} />
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <main id="main-content" className="relative z-10 mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-8">
       <header className="overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--panel)] shadow-sm">
         <div className="grid grid-cols-1 gap-6 p-6 sm:p-8 lg:grid-cols-[1.4fr_0.9fr]">
           <div>
@@ -589,17 +644,13 @@ export default function Home() {
               {(() => {
                 const toDisplay = showAllFavorites ? favorites : favorites.slice(0, 8);
                 return toDisplay.map((option) => (
-                  <button
+                  <span
                     key={option}
-                    type="button"
-                    onClick={() => toggleFavorite(option)}
-                    aria-pressed={true}
-                    title="Click to remove"
-                    className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                    className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900"
                   >
                     <TeamLogo teamName={option} size={20} />
                     {option}
-                  </button>
+                  </span>
                 ));
               })()}
               {favorites.length > 8 && (
@@ -639,24 +690,40 @@ export default function Home() {
                     <h2 className="text-base font-bold leading-snug">
                       {featuredGame.homeTeam}
                     </h2>
+                    {featuredGameReason ? (
+                      <p className="mt-2 text-[11px] leading-4 text-slate-300">
+                        <span className="font-semibold text-emerald-300">Recommended because</span>{" "}
+                        {featuredGameReason.replace(/^Because /, "").replace(/\.$/, "").toLowerCase()}.
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 
                 <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${
                       featuredGame.status === "live"
-                        ? "bg-red-500 text-white"
+                        ? "border border-red-400/40 bg-red-500/20 text-red-200"
                         : featuredGame.status === "final"
                         ? "bg-slate-600 text-slate-200"
                         : "bg-slate-700 text-slate-300"
                     }`}>
-                      {featuredGame.status === "live" ? "● Live" : featuredGame.status === "final" ? "Final" : "Upcoming"}
+                      {featuredGame.status === "live" ? <span className="h-1.5 w-1.5 rounded-full bg-red-400" aria-hidden="true" /> : null}
+                      {featuredGame.status === "live" ? "Live" : featuredGame.status === "final" ? "Final" : "Upcoming"}
                     </span>
-                    {featuredGame.venue ? (
-                      <p className="truncate text-[11px] text-slate-400">📍 {featuredGame.venue}</p>
+                    {featuredGame.status === "live" ? (
+                      <span className="rounded-md bg-amber-300/10 px-2 py-1 text-[11px] font-semibold text-amber-200">
+                        {featuredGame.periodLabel ?? "Quarter in progress"}
+                        {featuredGame.clock ? ` • ${featuredGame.clock} left` : ""}
+                      </span>
                     ) : null}
                   </div>
+                  {featuredGame.venue ? (
+                    <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-4 text-slate-400">
+                      <span aria-hidden="true">📍</span>
+                      <span>{featuredGame.venue}</span>
+                    </p>
+                  ) : null}
 
                   {featuredGame.status === "live" || featuredGame.status === "final" ? (
                     <div className="mt-2 flex items-center justify-around">
@@ -685,11 +752,6 @@ export default function Home() {
                   )}
                 </div>
 
-                {featuredGameReason ? (
-                  <p className="mt-3 rounded-lg bg-white/10 px-3 py-2 text-xs leading-relaxed text-slate-200">
-                    <span className="font-semibold text-emerald-300">Recommended because</span> {featuredGameReason.replace(/^Because /, "").replace(/\.$/, "").toLowerCase()}.
-                  </p>
-                ) : null}
               </>
             ) : (
               <>
@@ -705,7 +767,7 @@ export default function Home() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 id="schedule-title" className="text-lg font-semibold">Today&apos;s Schedule</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">3-5 games spread throughout the day, ranked by your favorites</p>
+            <p className="mt-1 text-sm text-[var(--muted)]">Your daily recommendation schedule, based on your favorite teams and leagues.</p>
           </div>
         </div>
 
@@ -721,6 +783,10 @@ export default function Home() {
                 watchOpts[0]?.streamingService ??
                 fallbackScheduleNetworks[idx % fallbackScheduleNetworks.length];
               const entry = dailyWatchPlan.find((e) => e.gameId === game.id);
+              const scheduleReason = entry?.reason ??
+                (idx === 0
+                  ? "Your highest-priority matchup based on your favorite teams and leagues."
+                  : "Recommended based on your favorite teams, leagues, and today’s viewing order.");
               const awayLogoTeam = getScheduleLogoTeam(game, "away");
               const homeLogoTeam = getScheduleLogoTeam(game, "home");
               const showSingleScheduleLogo = awayLogoTeam === homeLogoTeam;
@@ -735,9 +801,17 @@ export default function Home() {
                       {!showSingleScheduleLogo ? <TeamLogo teamName={homeLogoTeam} size={28} /> : null}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{formatScheduleMatchup(game)}</p>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="truncate text-sm font-semibold">{formatScheduleMatchup(game)}</p>
+                        {idx === 0 ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-red-700">
+                            <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true" />
+                            Live
+                          </span>
+                        ) : null}
+                      </div>
                       <p className="text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(game.startTimeIso)}</p>
-                      {entry && <p className="mt-1 text-xs text-emerald-700 font-medium">{entry.reason}</p>}
+                      <p className="mt-1 text-xs font-medium text-emerald-700">{scheduleReason}</p>
                     </div>
                   </div>
                   <div className="flex min-w-[180px] flex-col justify-center gap-1 border-l border-[var(--border)] bg-slate-50 px-3 py-2">
@@ -759,7 +833,7 @@ export default function Home() {
           <span className="text-xs text-[var(--muted)]">Source: {providerConfig.sports.provider}</span>
         </div>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Live, final, and next-up matchups tied to your current league view.
+          Live, final, and next-up matchups based on your favorites.
         </p>
         <div className="mt-3 space-y-2">
           {isLoadingGames ? <LoadingState label="Loading latest games..." /> : null}
@@ -778,17 +852,15 @@ export default function Home() {
                 })
                 .slice(0, 8)
                 .map((game) => {
-                  const getStatusColor = (status: string): string => {
-                    const statusLower = status.toLowerCase();
-                    if (statusLower === 'live' || statusLower === 'in_play') {
-                      return 'bg-orange-100 text-orange-900';
-                    } else if (statusLower === 'scheduled' || statusLower === 'upcoming') {
-                      return 'bg-blue-100 text-blue-900';
-                    } else if (statusLower === 'final' || statusLower === 'finished' || statusLower === 'completed') {
-                      return 'bg-green-100 text-green-900';
-                    }
-                    return 'bg-slate-100 text-slate-900';
-                  };
+                  const scoreboardHeaderClass =
+                    game.status === "live"
+                      ? "bg-red-600 text-white"
+                      : game.status === "final"
+                        ? "bg-slate-700 text-white"
+                        : "bg-blue-700 text-white";
+                  const scoreboardStatus =
+                    game.status === "live" ? "● LIVE" : game.status === "scheduled" ? "UPCOMING" : "FINAL";
+                  const liveGameDetail = [game.periodLabel ?? "Quarter in progress", game.clock].filter(Boolean).join(" • ");
 
                   return (
                     <article
@@ -807,9 +879,20 @@ export default function Home() {
                           </p>
                         </div>
                       </div>
-                      <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${getStatusColor(game.status)}`}>
-                        {game.status}
-                      </span>
+                      <div className="min-w-[150px] shrink-0 overflow-hidden rounded-md border border-slate-700 bg-slate-900 text-white shadow-sm">
+                        <div className={`flex items-center justify-between gap-2 px-2 py-1 text-[9px] font-bold uppercase tracking-wide ${scoreboardHeaderClass}`}>
+                          <span>{scoreboardStatus}</span>
+                          {game.status === "live" ? <span className="normal-case tracking-normal">{liveGameDetail}</span> : null}
+                        </div>
+                          <div className="flex items-center justify-between gap-3 border-b border-slate-700 px-2 py-1">
+                            <span className="max-w-[72px] truncate text-[10px] font-semibold text-slate-300">{game.awayTeam.split(" ").at(-1)}</span>
+                            <span className="text-base font-bold tabular-nums">{game.awayScore ?? 0}</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 px-2 py-1">
+                            <span className="max-w-[72px] truncate text-[10px] font-semibold text-slate-300">{game.homeTeam.split(" ").at(-1)}</span>
+                            <span className="text-base font-bold tabular-nums">{game.homeScore ?? 0}</span>
+                          </div>
+                      </div>
                     </article>
                   );
                 })
@@ -823,18 +906,22 @@ export default function Home() {
           <span className="text-xs text-[var(--muted)]">Source: {providerConfig.news.provider}</span>
         </div>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Headlines are filtered toward your favorites, with curated fallback copy when live keys are missing.
+          Read the latest articles on topics relevant to your favorite teams and leagues.
         </p>
         <div className="mt-3 space-y-2">
           {isLoadingNews ? <LoadingState label="Loading headlines..." /> : null}
-          {newsError ? <ErrorState message={newsError} /> : null}
-          {!isLoadingNews && !newsError
+          {newsError ? (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900" role="status">
+              Live news is unavailable, so preview articles are shown below.
+            </p>
+          ) : null}
+          {!isLoadingNews
             ? displayedNews.slice(0, newsPage * 5).map((item) => (
                 <a
                   key={item.id}
                   href={item.url}
-                  target="_blank"
-                  rel="noreferrer"
+                  target={item.url.startsWith("/") ? undefined : "_blank"}
+                  rel={item.url.startsWith("/") ? undefined : "noreferrer"}
                   className="flex items-stretch overflow-hidden rounded-lg border border-[var(--border)] bg-white text-sm hover:bg-slate-50"
                 >
                   {item.imageUrl ? (
@@ -866,7 +953,7 @@ export default function Home() {
               ))
             : null}
         </div>
-        {!isLoadingNews && !newsError && displayedNews.length > newsPage * 5 && (
+        {!isLoadingNews && displayedNews.length > newsPage * 5 && (
           <button
             type="button"
             onClick={() => setNewsPage((p) => p + 1)}
@@ -881,7 +968,7 @@ export default function Home() {
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="tickets-title">
         <h2 id="tickets-title" className="text-lg font-semibold">Tickets near {zipCode}</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Browse tickets for your favorite games across multiple providers
+          Browse recommended tickets in your area.
         </p>
         <div className="mt-4 space-y-3">
           {ticketOptions.length === 0 ? (
@@ -951,9 +1038,9 @@ export default function Home() {
       </section>
 
       <section className="dashboard-section mt-5 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-4 sm:mt-6 sm:p-6" aria-labelledby="recommendations-title">
-        <h2 id="recommendations-title" className="text-lg font-semibold">Recommended games beyond favorites</h2>
-        <p className="mt-1 text-xs text-[var(--muted)]">
-          Reason labels explain why each game is suggested.
+        <h2 id="recommendations-title" className="text-lg font-semibold">Additional games you might be interested in</h2>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          Scores are based on proximity to your favorites.
         </p>
 
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -1016,10 +1103,7 @@ export default function Home() {
           <h3 className="text-sm font-semibold">Your Favorites ({selectedCount})</h3>
           <p className="mt-1 text-xs text-[var(--muted)]">Ranked by importance. Drag or use arrows to reorder. These rankings impact your recommendations.</p>
           <div className="mt-3 space-y-1">
-            {allAvailableOptions.map((option, index) => {
-              const selected = favorites.includes(option);
-              if (!selected) return null;
-              const favoriteIndex = favorites.indexOf(option);
+            {favorites.map((option, favoriteIndex) => {
               return (
                 <div
                   key={option}

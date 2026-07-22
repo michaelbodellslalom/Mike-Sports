@@ -26,6 +26,8 @@ export type Game = {
   awayTeam: string;
   homeScore?: number;
   awayScore?: number;
+  periodLabel?: string;
+  clock?: string;
   venue?: string;
 };
 

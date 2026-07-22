@@ -18,6 +18,13 @@ type PreferencesState = {
   setWatchPriority: (priority: WatchPriority) => void;
 };
 
+function buildRanksFromFavorites(favorites: string[]): Record<string, number> {
+  return favorites.reduce<Record<string, number>>((acc, favorite, index) => {
+    acc[favorite] = index;
+    return acc;
+  }, {});
+}
+
 const createStorage = () => {
   if (typeof window === "undefined") {
     return {
@@ -33,45 +40,55 @@ export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set, get) => ({
       favorites: [...initialFavoriteOptions],
-      favoriteRanks: initialFavoriteOptions.reduce(
-        (acc, fav, idx) => ({ ...acc, [fav]: idx }),
-        {}
-      ),
+      favoriteRanks: buildRanksFromFavorites(initialFavoriteOptions),
       zipCode: "80222",
       watchPriority: "favorites-first",
-      setFavorites: (favorites) => set({ favorites }),
+      setFavorites: (favorites) =>
+        set({
+          favorites,
+          favoriteRanks: buildRanksFromFavorites(favorites),
+        }),
       toggleFavorite: (favorite) => {
-        const { favorites, favoriteRanks } = get();
-        const next = favorites.includes(favorite)
+        const { favorites } = get();
+        const nextFavorites = favorites.includes(favorite)
           ? favorites.filter((item) => item !== favorite)
           : [...favorites, favorite];
-        // If adding, add to end with highest rank + 1
-        if (!favorites.includes(favorite)) {
-          const maxRank = Math.max(...Object.values(favoriteRanks), -1);
-          favoriteRanks[favorite] = maxRank + 1;
-        }
-        set({ favorites: next, favoriteRanks });
+        set({
+          favorites: nextFavorites,
+          favoriteRanks: buildRanksFromFavorites(nextFavorites),
+        });
       },
       rankFavorite: (favorite, rank) => {
-        const { favoriteRanks } = get();
-        set({ favoriteRanks: { ...favoriteRanks, [favorite]: rank } });
+        const { favorites } = get();
+        const currentIndex = favorites.indexOf(favorite);
+        if (currentIndex === -1) return;
+        const clampedRank = Math.max(0, Math.min(rank, favorites.length - 1));
+        if (clampedRank === currentIndex) return;
+
+        const reordered = [...favorites];
+        reordered.splice(currentIndex, 1);
+        reordered.splice(clampedRank, 0, favorite);
+
+        set({
+          favorites: reordered,
+          favoriteRanks: buildRanksFromFavorites(reordered),
+        });
       },
       moveFavorite: (favorite, direction) => {
-        const { favorites, favoriteRanks } = get();
+        const { favorites } = get();
         const index = favorites.indexOf(favorite);
         if (index === -1) return;
         if (direction === "up" && index === 0) return;
         if (direction === "down" && index === favorites.length - 1) return;
 
         const targetIndex = direction === "up" ? index - 1 : index + 1;
-        const targetFav = favorites[targetIndex];
+        const reordered = [...favorites];
+        [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
 
-        // Swap ranks
-        const tempRank = favoriteRanks[favorite];
-        favoriteRanks[favorite] = favoriteRanks[targetFav];
-        favoriteRanks[targetFav] = tempRank;
-
-        set({ favoriteRanks });
+        set({
+          favorites: reordered,
+          favoriteRanks: buildRanksFromFavorites(reordered),
+        });
       },
       setZipCode: (zipCode) => set({ zipCode }),
       setWatchPriority: (watchPriority) => set({ watchPriority }),

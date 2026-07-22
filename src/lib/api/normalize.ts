@@ -10,6 +10,8 @@ type TheSportsDbEvent = {
   strAwayTeam: string;
   intHomeScore?: string;
   intAwayScore?: string;
+  strProgress?: string;
+  strClock?: string;
   strVenue?: string;
 };
 
@@ -53,6 +55,8 @@ export function normalizeSportsDbEvents(events: TheSportsDbEvent[]): Game[] {
       awayTeam: event.strAwayTeam,
       homeScore: event.intHomeScore ? Number(event.intHomeScore) : undefined,
       awayScore: event.intAwayScore ? Number(event.intAwayScore) : undefined,
+      periodLabel: event.strProgress || undefined,
+      clock: event.strClock || undefined,
       venue: event.strVenue,
     };
   });

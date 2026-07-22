@@ -7,7 +7,13 @@ export function scheduleWindowDays(window: ScheduleWindow): number {
 }
 
 export function formatLocalDateTime(iso: string): string {
-  return new Date(iso).toLocaleString();
+  return new Date(iso).toLocaleString(undefined, {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 export function isWithinScheduleWindow(
