@@ -292,21 +292,21 @@ export const fallbackNewsByLeague: Record<string, NewsItem[]> = {
 export const fallbackWatchOptions: WatchOption[] = [
   {
     gameId: "fallback-default",
-    network: "ESPN",
+    network: "Fox",
     notes: "Primary national broadcast window",
   },
   {
     gameId: "fallback-default",
-    streamingService: "ESPN+",
-    notes: "Streaming fallback when local TV is unavailable",
+    network: "NBC",
+    notes: "Secondary national broadcast option",
   },
 ];
 
 export const fallbackTicketOptions: TicketOption[] = [
   {
     gameId: "fallback-default",
-    provider: "Ticketmaster",
-    url: "https://www.ticketmaster.com/",
+    provider: "Gametime",
+    url: "https://gametime.co/",
     city: "80222",
     state: "CO",
   },

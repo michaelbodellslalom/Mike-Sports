@@ -19,7 +19,7 @@ import { inferLeagueFromFavorite } from "@/lib/favoritesToLeague";
 import { providerConfig } from "@/lib/api/providers";
 import { formatLocalDateTime, isWithinScheduleWindow, type ScheduleWindow } from "@/lib/dateTime";
 import { buildRecommendations } from "@/lib/recommendations";
-import { buildTicketOptions } from "@/lib/tickets";
+import { buildTicketOptions, ensureColoradoMatchup, getDenverVenueForLeague } from "@/lib/tickets";
 import { buildDailyWatchPlan } from "@/lib/watchPlan";
 import { getTeamLogo } from "@/lib/teamLogos";
 import { getNetworkInfo } from "@/lib/networkInfo";
@@ -64,6 +64,21 @@ function formatGameLine(game: Game): string {
     return `${game.awayTeam} ${game.awayScore ?? 0} at ${game.homeTeam} ${game.homeScore ?? 0}`;
   }
   return `${game.awayTeam} at ${game.homeTeam}`;
+}
+
+function formatScheduleMatchup(game: Game): string {
+  if (game.league === "PGA" && game.awayTeam === "Featured Group" && game.homeTeam === "Round 1") {
+    return "PGA Featured Group • Round 1";
+  }
+  return `${game.awayTeam} @ ${game.homeTeam}`;
+}
+
+function getScheduleLogoTeam(game: Game, side: "away" | "home"): string {
+  const teamName = side === "away" ? game.awayTeam : game.homeTeam;
+  if (game.league === "PGA") {
+    return "PGA";
+  }
+  return teamName;
 }
 
 function fallbackGameLabel(gameId: string): string {
@@ -394,7 +409,10 @@ export default function Home() {
         }));
   }, [activeWatchGameId, watchOptions]);
   const ticketOptions = useMemo(() => {
-    const generated = buildTicketOptions(scheduleGames.slice(0, 6), zipCode);
+    const sortedScheduleGames = [...scheduleGames].sort(
+      (a, b) => new Date(a.startTimeIso).getTime() - new Date(b.startTimeIso).getTime(),
+    );
+    const generated = buildTicketOptions(sortedScheduleGames.slice(0, 6), zipCode);
     if (generated.length > 0) {
       return generated;
     }
@@ -697,28 +715,37 @@ export default function Home() {
           ) : (
             scheduledTodayGames.map((game, idx) => {
               const watchOpts = watchOptions.filter((o) => o.gameId === game.id);
+              const fallbackScheduleNetworks = ["Fox", "NBC", "CBS", "ESPN"];
+              const watchDisplayName =
+                watchOpts[0]?.network ??
+                watchOpts[0]?.streamingService ??
+                fallbackScheduleNetworks[idx % fallbackScheduleNetworks.length];
               const entry = dailyWatchPlan.find((e) => e.gameId === game.id);
+              const awayLogoTeam = getScheduleLogoTeam(game, "away");
+              const homeLogoTeam = getScheduleLogoTeam(game, "home");
+              const showSingleScheduleLogo = awayLogoTeam === homeLogoTeam;
               return (
                 <article key={game.id} className="flex items-stretch gap-3 rounded-lg border border-[var(--border)] bg-white overflow-hidden">
                   <div className="flex w-12 shrink-0 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-emerald-100 font-bold text-emerald-700">
                     <span className="text-lg">#{idx + 1}</span>
                   </div>
-                  <div className="flex flex-1 items-center gap-0.5 px-3 py-2">
-                    <TeamLogo teamName={game.awayTeam} size={28} />
+                  <div className="flex flex-1 items-center gap-2 px-3 py-2">
+                    <div className="flex w-[56px] shrink-0 items-center justify-center gap-0.5">
+                      <TeamLogo teamName={awayLogoTeam} size={28} />
+                      {!showSingleScheduleLogo ? <TeamLogo teamName={homeLogoTeam} size={28} /> : null}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{game.awayTeam} @ {game.homeTeam}</p>
+                      <p className="font-semibold text-sm truncate">{formatScheduleMatchup(game)}</p>
                       <p className="text-xs text-[var(--muted)]" suppressHydrationWarning>{formatLocalDateTime(game.startTimeIso)}</p>
                       {entry && <p className="mt-1 text-xs text-emerald-700 font-medium">{entry.reason}</p>}
                     </div>
-                    <TeamLogo teamName={game.homeTeam} size={28} />
                   </div>
-                  {watchOpts.length > 0 && (
-                    <div className="flex flex-wrap items-center justify-end gap-1 px-3 py-2 bg-slate-50 border-l border-[var(--border)]">
-                      {watchOpts.slice(0, 2).map((opt) => (
-                        <NetworkBadge key={`${game.id}-${opt.network ?? opt.streamingService}`} name={opt.network ?? opt.streamingService ?? "Unknown"} />
-                      ))}
+                  <div className="flex min-w-[180px] flex-col justify-center gap-1 border-l border-[var(--border)] bg-slate-50 px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Where to watch</p>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <NetworkBadge key={`${game.id}-schedule-watch`} name={watchDisplayName} />
                     </div>
-                  )}
+                  </div>
                 </article>
               );
             })
@@ -768,15 +795,17 @@ export default function Home() {
                       key={game.id}
                       className="flex items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-white px-3 py-3 text-sm shadow-sm"
                     >
-                      <div className="flex items-center gap-0.5 min-w-0">
-                        <TeamLogo teamName={game.awayTeam} size={28} />
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <div className="flex shrink-0 items-center gap-0.5">
+                          <TeamLogo teamName={game.awayTeam} size={28} />
+                          <TeamLogo teamName={game.homeTeam} size={28} />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{formatGameLine(game)}</p>
                           <p className="mt-0.5 text-xs uppercase tracking-wide text-[var(--muted)]" suppressHydrationWarning>
                             {formatLocalDateTime(game.startTimeIso)}{game.venue ? ` • ${game.venue}` : ""}
                           </p>
                         </div>
-                        <TeamLogo teamName={game.homeTeam} size={28} />
                       </div>
                       <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${getStatusColor(game.status)}`}>
                         {game.status}
@@ -860,18 +889,25 @@ export default function Home() {
           ) : (
             ticketOptions.map((ticket) => {
               const game = scheduleGames.find((item) => item.id === ticket.gameId);
+              const matchup = game ? ensureColoradoMatchup(game) : null;
+              const denverVenue = game ? getDenverVenueForLeague(game.league) : null;
               const providerColors: Record<string, string> = {
                 ticketmaster: 'bg-blue-50 border-blue-200 hover:bg-blue-100',
                 stubhub: 'bg-orange-50 border-orange-200 hover:bg-orange-100',
+                'stub hub': 'bg-orange-50 border-orange-200 hover:bg-orange-100',
+                gametime: 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100',
                 vividseats: 'bg-purple-50 border-purple-200 hover:bg-purple-100',
               };
               const providerBadgeColors: Record<string, string> = {
                 ticketmaster: 'bg-blue-500 text-white',
                 stubhub: 'bg-orange-500 text-white',
+                'stub hub': 'bg-orange-500 text-white',
+                gametime: 'bg-emerald-600 text-white',
                 vividseats: 'bg-purple-500 text-white',
               };
-              const colorClass = providerColors[ticket.provider.toLowerCase()] || 'bg-slate-50 border-slate-200 hover:bg-slate-100';
-              const badgeClass = providerBadgeColors[ticket.provider.toLowerCase()] || 'bg-slate-400 text-white';
+              const providerKey = ticket.provider.toLowerCase();
+              const colorClass = providerColors[providerKey] || 'bg-slate-50 border-slate-200 hover:bg-slate-100';
+              const badgeClass = providerBadgeColors[providerKey] || 'bg-slate-400 text-white';
               
               return (
                 <a
@@ -884,8 +920,13 @@ export default function Home() {
                   <div className="flex items-start justify-between gap-3 p-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm">
-                        {game ? `${game.awayTeam} at ${game.homeTeam}` : 'Open matchup tickets'}
+                        {matchup ? `${matchup.awayTeam} at ${matchup.homeTeam}` : 'Open matchup tickets'}
                       </p>
+                      {game ? (
+                        <p className="mt-1 text-xs uppercase tracking-wide text-[var(--muted)]" suppressHydrationWarning>
+                          {formatLocalDateTime(game.startTimeIso)}{denverVenue ? ` • ${denverVenue}` : ""}
+                        </p>
+                      ) : null}
                       <p className="mt-1 text-xs text-[var(--muted)]">
                         Get tickets for ZIP {zipCode}
                       </p>
