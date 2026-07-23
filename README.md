@@ -6,6 +6,15 @@ Single-page personal sports hub for live scores, schedules, news, watch options,
 
 MVP implementation is complete through core experience, recommendation engine, watch planner, and quality hardening.
 
+## Current experience
+
+- Favorites personalize the schedule, scores, news, recommendations, and team-logo background.
+- Live scoreboards show game status, score, period or quarter, and time remaining when available.
+- Today's schedule provides ranked recommendations, plain-language selection reasons, and where-to-watch badges.
+- News uses live provider articles when available and curated local preview articles as a readable fallback.
+- Tickets surface recommended Colorado-area matchups, local venues, times, and outbound provider links for the selected ZIP code.
+- Additional-game recommendations use varied explanations based on league relevance, timing, overlap, and proximity to favorites.
+
 ## Launch scope
 
 - Leagues: NFL, NBA, MLB, NHL, NCAA football, NCAA men's basketball, PGA, UFC
@@ -104,6 +113,8 @@ Current checks all pass:
 - `npm run lint`
 - `npm run test`
 - `npm run build`
+
+The preferences store hydrates after the initial client render to prevent saved favorites from causing server/client content mismatches.
 
 ## Testing coverage highlights
 

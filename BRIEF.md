@@ -5,7 +5,7 @@
 | **Engagement** | Personal build |
 | **Workstream** | Mike Sports MVP |
 | **Prepared** | July 8, 2026 |
-| **Status** | Discovery brief — planning prototype |
+| **Status** | MVP implemented — iterative refinement |
 | **Owner** | Mike |
 
 ## Objective
@@ -173,3 +173,11 @@ Open the product with this setup so expectations stay realistic:
 2. Reason-label explanations are enough to build trust without full transparent scoring math.
 3. Manual location entry is acceptable as the default for ticket relevance.
 4. Favorite-first scheduling meets user expectations better than pure "best game" ranking.
+
+## Current MVP implementation notes
+
+- The dashboard uses saved favorites to personalize schedules, scores, news, recommendations, and a subtle team-logo background.
+- Live game models support scores, period or quarter labels, and time remaining when provider data supplies those fields.
+- The daily schedule ranks a small set of games, explains why each row was selected, and includes one viewing network per game.
+- Curated preview articles provide a complete local reading experience when live news publisher content is unavailable.
+- Ticket recommendations use the selected ZIP code, Colorado-area matchups and venues for the current demo, and outbound provider searches.
