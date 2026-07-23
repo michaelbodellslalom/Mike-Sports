@@ -96,6 +96,7 @@ export const usePreferencesStore = create<PreferencesState>()(
     {
       name: "mike-sports-preferences",
       storage: createJSONStorage(createStorage),
+      skipHydration: true,
       partialize: (state) => ({
         favorites: state.favorites,
         favoriteRanks: state.favoriteRanks,

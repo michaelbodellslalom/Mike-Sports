@@ -136,6 +136,11 @@ export const teamLogoMap: Record<string, string> = {
   "University of Minnesota basketball": `${ESPN}/ncaa/500/135.png`,
   "University of Minnesota volleyball": `${ESPN}/ncaa/500/135.png`,
   "Minnesota Gophers": `${ESPN}/ncaa/500/135.png`,
+  "Iowa": `${ESPN}/ncaa/500/2294.png`,
+  "Iowa Hawkeyes": `${ESPN}/ncaa/500/2294.png`,
+  "Wisconsin": `${ESPN}/ncaa/500/275.png`,
+  "Wisconsin Badgers": `${ESPN}/ncaa/500/275.png`,
+  "Colorado Buffaloes": `${ESPN}/ncaa/500/38.png`,
 
   // WNBA
   "Minnesota Lynx": "https://a.espncdn.com/i/teamlogos/wnba/500/min.png",
@@ -160,9 +165,10 @@ export function getTeamLogo(teamName: string | null | undefined): string | undef
   if (!teamName) return undefined;
   if (teamLogoMap[teamName]) return teamLogoMap[teamName];
   // Partial match on last word (e.g. "Vikings", "Twins")
-  const words = teamName.split(" ");
+  const lastWord = teamName.trim().split(/\s+/).at(-1)?.toLowerCase();
+  if (!lastWord) return undefined;
   for (const [key, url] of Object.entries(teamLogoMap)) {
-    if (key.toLowerCase().endsWith(words.at(-1)?.toLowerCase() ?? "")) return url;
+    if (key.toLowerCase().split(/\s+/).at(-1) === lastWord) return url;
   }
   return undefined;
 }

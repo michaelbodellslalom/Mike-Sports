@@ -154,7 +154,11 @@ const leagueColors: Record<string, string> = {
 const sportBadges: Record<string, { text: string; bg: string; fg: string }> = {
   PGA: { text: "PGA", bg: "#1a7a40", fg: "#fff" },
   "PGA Tour": { text: "PGA", bg: "#1a7a40", fg: "#fff" },
+  "Featured Group": { text: "PGA", bg: "#1a7a40", fg: "#fff" },
+  "Round 1": { text: "PGA", bg: "#1a7a40", fg: "#fff" },
   UFC: { text: "UFC", bg: "#cc0000", fg: "#fff" },
+  "Main Card": { text: "UFC", bg: "#cc0000", fg: "#fff" },
+  "Title Fight": { text: "UFC", bg: "#cc0000", fg: "#fff" },
   NFL: { text: "NFL", bg: "#003087", fg: "#fff" },
   NBA: { text: "NBA", bg: "#1d428a", fg: "#fff" },
   MLB: { text: "MLB", bg: "#12144d", fg: "#fff" },
@@ -167,9 +171,14 @@ const sportBadges: Record<string, { text: string; bg: string; fg: string }> = {
 
 function TeamLogo({ teamName, size = 28 }: { teamName: string | null | undefined; size?: number }) {
   const [imgError, setImgError] = useState(false);
-  if (!teamName) return null;
   const src = getTeamLogo(teamName);
-  const badge = sportBadges[teamName];
+  const badge = teamName ? sportBadges[teamName] : undefined;
+
+  useEffect(() => {
+    setImgError(false);
+  }, [src, teamName]);
+
+  if (!teamName) return null;
   const initials = teamName
     .split(" ")
     .slice(-2)
@@ -184,7 +193,7 @@ function TeamLogo({ teamName, size = 28 }: { teamName: string | null | undefined
         alt={teamName}
         width={size}
         height={size}
-        className="shrink-0 object-contain"
+        className="shrink-0 object-contain drop-shadow-sm"
         aria-hidden="true"
         unoptimized
         onError={() => setImgError(true)}
@@ -194,7 +203,7 @@ function TeamLogo({ teamName, size = 28 }: { teamName: string | null | undefined
   if (badge) {
     return (
       <span
-        className="inline-flex shrink-0 items-center justify-center rounded-full text-[10px] font-black tracking-tight"
+        className="inline-flex shrink-0 items-center justify-center rounded-full border border-white/40 text-[10px] font-black tracking-tight shadow-sm"
         style={{ backgroundColor: badge.bg, color: badge.fg, width: size, height: size }}
         aria-hidden="true"
       >
@@ -204,7 +213,7 @@ function TeamLogo({ teamName, size = 28 }: { teamName: string | null | undefined
   }
   return (
     <span
-      className="inline-flex shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600"
+      className="inline-flex shrink-0 items-center justify-center rounded-full border border-slate-300 bg-gradient-to-br from-slate-100 to-slate-200 text-[10px] font-bold text-slate-700 shadow-sm"
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
@@ -254,6 +263,13 @@ export default function Home() {
   const [selectedWatchGameId, setSelectedWatchGameId] = useState<string>("");
   const [showAllFavorites, setShowAllFavorites] = useState(false);
   const [newsPage, setNewsPage] = useState(1);
+  const [hasHydratedPreferences, setHasHydratedPreferences] = useState(false);
+
+  useEffect(() => {
+    void Promise.resolve(usePreferencesStore.persist.rehydrate()).finally(() => {
+      setHasHydratedPreferences(true);
+    });
+  }, []);
 
   const selectedCount = useMemo(() => favorites.length, [favorites.length]);
   const favoriteCollageTeams = useMemo(
@@ -608,6 +624,16 @@ export default function Home() {
     );
   };
 
+  if (!hasHydratedPreferences) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6">
+        <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm">
+          <LoadingState label="Loading your personalized sports dashboard..." />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <>
       <a href="#main-content" className="skip-link">
@@ -791,7 +817,7 @@ export default function Home() {
               const homeLogoTeam = getScheduleLogoTeam(game, "home");
               const showSingleScheduleLogo = awayLogoTeam === homeLogoTeam;
               return (
-                <article key={game.id} className="flex items-stretch gap-3 rounded-lg border border-[var(--border)] bg-white overflow-hidden">
+                <article key={game.id} className="flex items-stretch gap-3 overflow-hidden rounded-lg border border-[var(--border)] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                   <div className="flex w-12 shrink-0 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-emerald-100 font-bold text-emerald-700">
                     <span className="text-lg">#{idx + 1}</span>
                   </div>
@@ -865,7 +891,7 @@ export default function Home() {
                   return (
                     <article
                       key={game.id}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-white px-3 py-3 text-sm shadow-sm"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-white px-3 py-3 text-sm shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                     >
                       <div className="flex min-w-0 flex-1 items-center gap-2">
                         <div className="flex shrink-0 items-center gap-0.5">
@@ -922,7 +948,7 @@ export default function Home() {
                   href={item.url}
                   target={item.url.startsWith("/") ? undefined : "_blank"}
                   rel={item.url.startsWith("/") ? undefined : "noreferrer"}
-                  className="flex items-stretch overflow-hidden rounded-lg border border-[var(--border)] bg-white text-sm hover:bg-slate-50"
+                  className="group flex items-stretch overflow-hidden rounded-lg border border-[var(--border)] bg-white text-sm shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
                 >
                   {item.imageUrl ? (
                     <div className="w-20 shrink-0 overflow-hidden bg-slate-100">
@@ -939,12 +965,16 @@ export default function Home() {
                       />
                     </div>
                   ) : (
-                    <div className="flex w-16 shrink-0 items-center justify-center bg-slate-100">
-                      <LeagueDot league={item.relatedLeague} />
+                    <div className="flex w-20 shrink-0 items-center justify-center border-r border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-sky-50">
+                      {item.relatedTeam ? (
+                        <TeamLogo teamName={item.relatedTeam} size={38} />
+                      ) : (
+                        <LeagueDot league={item.relatedLeague} />
+                      )}
                     </div>
                   )}
                   <div className="flex-1 px-3 py-2">
-                    <p className="font-medium leading-snug">{item.title}</p>
+                    <p className="font-medium leading-snug transition group-hover:text-[var(--brand)]">{item.title}</p>
                     <p className="mt-1 text-xs text-[var(--muted)]" suppressHydrationWarning>
                       {item.source} • {formatLocalDateTime(item.publishedAtIso)}
                     </p>
@@ -1004,7 +1034,7 @@ export default function Home() {
                   rel="noreferrer"
                   className={`group block rounded-lg border border-[var(--border)] transition ${colorClass}`}
                 >
-                  <div className="flex items-start justify-between gap-3 p-3">
+                  <div className="flex items-center justify-between gap-3 p-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm">
                         {matchup ? `${matchup.awayTeam} at ${matchup.homeTeam}` : 'Open matchup tickets'}
