@@ -170,13 +170,9 @@ const sportBadges: Record<string, { text: string; bg: string; fg: string }> = {
 };
 
 function TeamLogo({ teamName, size = 28 }: { teamName: string | null | undefined; size?: number }) {
-  const [imgError, setImgError] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const src = getTeamLogo(teamName);
   const badge = teamName ? sportBadges[teamName] : undefined;
-
-  useEffect(() => {
-    setImgError(false);
-  }, [src, teamName]);
 
   if (!teamName) return null;
   const initials = teamName
@@ -186,7 +182,7 @@ function TeamLogo({ teamName, size = 28 }: { teamName: string | null | undefined
     .join("")
     .toUpperCase()
     .slice(0, 2);
-  if (src && !imgError) {
+  if (src && failedSrc !== src) {
     return (
       <Image
         src={src}
@@ -196,7 +192,7 @@ function TeamLogo({ teamName, size = 28 }: { teamName: string | null | undefined
         className="shrink-0 object-contain drop-shadow-sm"
         aria-hidden="true"
         unoptimized
-        onError={() => setImgError(true)}
+        onError={() => setFailedSrc(src)}
       />
     );
   }

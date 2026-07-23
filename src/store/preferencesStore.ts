@@ -18,7 +18,7 @@ type PreferencesState = {
   setWatchPriority: (priority: WatchPriority) => void;
 };
 
-function buildRanksFromFavorites(favorites: string[]): Record<string, number> {
+function buildRanksFromFavorites(favorites: readonly string[]): Record<string, number> {
   return favorites.reduce<Record<string, number>>((acc, favorite, index) => {
     acc[favorite] = index;
     return acc;
