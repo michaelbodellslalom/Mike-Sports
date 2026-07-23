@@ -82,7 +82,10 @@ Legacy `NEXT_PUBLIC_*` names are still accepted for backward compatibility, but 
 
 ## Architecture notes
 
-- App entry point: [src/app/page.tsx](src/app/page.tsx)
+- Dashboard orchestration and data loading: [src/app/page.tsx](src/app/page.tsx)
+- Focused dashboard sections: [src/components/dashboard](src/components/dashboard)
+- Reusable visual primitives: [src/components/ui](src/components/ui)
+- Shared loading, error, and empty states: [src/components/state](src/components/state)
 - API routes:
   - [src/app/api/sports/route.ts](src/app/api/sports/route.ts)
   - [src/app/api/news/route.ts](src/app/api/news/route.ts)
