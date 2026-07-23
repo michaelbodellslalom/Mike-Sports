@@ -43,14 +43,14 @@ export function TodaySchedule({ games, watchOptions, watchPlan }: TodayScheduleP
             const watchDisplayName = gameWatchOptions[0]?.network ?? gameWatchOptions[0]?.streamingService ?? fallbackNetworks[index % fallbackNetworks.length];
             const entry = watchPlan.find((item) => item.gameId === game.id);
             const reason =
-              index === 2
-                ? "The Twins are a favorited team."
+              index === 0
+                ? "The Vikings are a favorited team."
+                : index === 2
+                  ? "The Twins are a favorited team."
                 : index === 4
                   ? "The PGA is a favorited league."
                   : entry?.reason ??
-                    (index === 0
-                      ? "Your highest-priority matchup based on your favorite teams and leagues."
-                      : "Recommended based on your favorite teams, leagues, and today’s viewing order.");
+                    "Recommended based on your favorite teams, leagues, and today’s viewing order.";
             const awayLogoTeam = getScheduleLogoTeam(game, "away");
             const homeLogoTeam = getScheduleLogoTeam(game, "home");
 
