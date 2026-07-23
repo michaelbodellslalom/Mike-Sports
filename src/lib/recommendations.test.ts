@@ -21,6 +21,13 @@ describe("buildRecommendations", () => {
     expect(recommendations[0].reason.length).toBeGreaterThan(10);
   });
 
+  it("varies reason language across recommendation candidates", () => {
+    const recommendations = buildRecommendations(fixtureGames, fixtureFavorites);
+    const uniqueReasons = new Set(recommendations.map((item) => item.reason));
+
+    expect(uniqueReasons.size).toBeGreaterThan(1);
+  });
+
   it("keeps deterministic top recommendation for fixtures", () => {
     const recommendations = buildRecommendations(fixtureGames, fixtureFavorites);
     expect(recommendations[0].gameId).toBe(expectedRecommendationTopId);

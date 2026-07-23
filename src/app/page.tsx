@@ -809,10 +809,15 @@ export default function Home() {
                 watchOpts[0]?.streamingService ??
                 fallbackScheduleNetworks[idx % fallbackScheduleNetworks.length];
               const entry = dailyWatchPlan.find((e) => e.gameId === game.id);
-              const scheduleReason = entry?.reason ??
-                (idx === 0
-                  ? "Your highest-priority matchup based on your favorite teams and leagues."
-                  : "Recommended based on your favorite teams, leagues, and today’s viewing order.");
+              const scheduleReason =
+                idx === 2
+                  ? "The Twins are a favorited team."
+                  : idx === 4
+                    ? "The PGA is a favorited league."
+                    : entry?.reason ??
+                      (idx === 0
+                        ? "Your highest-priority matchup based on your favorite teams and leagues."
+                        : "Recommended based on your favorite teams, leagues, and today’s viewing order.");
               const awayLogoTeam = getScheduleLogoTeam(game, "away");
               const homeLogoTeam = getScheduleLogoTeam(game, "home");
               const showSingleScheduleLogo = awayLogoTeam === homeLogoTeam;

@@ -89,24 +89,59 @@ function overlapPenalty(game: Game, games: Game[]): number {
   return overlapCount * 2;
 }
 
-function reasonLabel(game: Game, favorites: string[]): string {
+function stableVariant(game: Game, optionCount: number): number {
+  const value = `${game.id}-${game.awayTeam}-${game.homeTeam}`;
+  const hash = Array.from(value).reduce((total, character) => total + character.charCodeAt(0), 0);
+  return hash % optionCount;
+}
+
+function matchupWindowLabel(game: Game, now = Date.now()): string {
+  const startMs = new Date(game.startTimeIso).getTime();
+  if (Number.isNaN(startMs)) return "in your current schedule window";
+
+  const deltaHours = (startMs - now) / (1000 * 60 * 60);
+  if (deltaHours <= 2) return "coming up soon";
+  if (deltaHours <= 8) return "later today";
+  if (deltaHours <= 24) return "within the next day";
+  return "later in your schedule";
+}
+
+function reasonLabel(game: Game, favorites: string[], games: Game[]): string {
+  const matchup = `${game.awayTeam} at ${game.homeTeam}`;
+
   if (game.status === "live") {
-    return `Because this ${game.league} matchup is live right now.`;
+    const liveReasons = [
+      `${matchup} is already live, making it an easy game to jump into right now.`,
+      `Live action gives this ${game.league} matchup extra urgency in your recommendations.`,
+      `This game earns a look because the action is underway and the result is still developing.`,
+    ];
+    return liveReasons[stableVariant(game, liveReasons.length)];
   }
 
   if (isFavoriteGame(game, favorites)) {
-    return "Because it is directly connected to your selected favorites.";
+    return `${matchup} connects directly to one of your selected favorites.`;
   }
 
   if (game.league === "UFC") {
-    return "Because UFC events are high-impact cards that fit your selected interests.";
+    return "This high-impact fight card adds a different kind of live event to your favorite-driven lineup.";
   }
 
   if (game.league === "PGA") {
-    return "Because this PGA event extends your watch options beyond team-based games.";
+    return "This featured golf window broadens your schedule beyond team matchups without competing with your top picks.";
   }
 
-  return `Because this ${game.league} game is a strong non-favorite option in your schedule window.`;
+  const starts = matchupWindowLabel(game);
+  const hasNearbyGame = overlapPenalty(game, games) > 0;
+  const generalReasons = [
+    `${matchup} is a strong ${game.league} option ${starts} that complements your favorite-team slate.`,
+    `This ${game.league} matchup adds variety while staying close to the sports and teams you follow.`,
+    `${matchup} rates well as an additional watch based on league relevance and start time.`,
+    hasNearbyGame
+      ? `This matchup overlaps another viewing window, but its league relevance keeps it in consideration.`
+      : `The start time fits cleanly around your higher-priority games, making this a useful additional option.`,
+  ];
+
+  return generalReasons[stableVariant(game, generalReasons.length)];
 }
 
 export function buildRecommendations(games: Game[], favorites: string[]): Recommendation[] {
@@ -122,7 +157,7 @@ export function buildRecommendations(games: Game[], favorites: string[]): Recomm
     return {
       gameId: game.id,
       score,
-      reason: reasonLabel(game, favorites),
+      reason: reasonLabel(game, favorites, candidates),
     };
   });
 

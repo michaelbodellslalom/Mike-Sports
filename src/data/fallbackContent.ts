@@ -391,7 +391,7 @@ export const fallbackWatchPlan: WatchPlanEntry[] = [
     gameId: "fallback-plan-1",
     rank: 1,
     plannedStartIso: "2026-07-08T18:30:00Z",
-    reason: "Favorite-first priority for your selected teams and leagues.",
+    reason: "Favorited team or league.",
   },
   {
     gameId: "fallback-plan-2",

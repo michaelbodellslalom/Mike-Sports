@@ -69,7 +69,7 @@ export function buildDailyWatchPlan(games: Game[], favorites: string[], limit = 
       rank: index + 1,
       plannedStartIso: game.startTimeIso,
       reason: isFavorite
-        ? "Favorite-first priority for your selected teams or leagues."
+        ? "Favorited team or league."
         : recommendation?.reason ?? "Selected to improve variety and reduce overlap.",
     };
   });
